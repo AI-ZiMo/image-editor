@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Upload, Sparkles, AlertCircle, Download, X, Maximize2, Check } from "lucide-react"
+import { toast } from "sonner"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Navbar } from "@/components/navbar"
 import { createClient } from "@/lib/supabase/client"
@@ -61,6 +62,7 @@ export default function ImageEditor() {
   const [generationMode, setGenerationMode] = useState<"style" | "prompt">("style")
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [imageToDelete, setImageToDelete] = useState<number | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // 认证检查已移至服务器端layout.tsx，此处不再需要
@@ -68,7 +70,7 @@ export default function ImageEditor() {
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
-      setIsProcessing(true)
+      setIsUploading(true)
       
       try {
         // Show local preview immediately
@@ -106,14 +108,18 @@ export default function ImageEditor() {
                 }
               : img
           ))
+          
+          // 显示成功toast
+          toast.success('图片上传成功！')
         } else {
           console.error('Upload failed:', uploadResult.error)
-          // Could show error toast here
+          toast.error('图片上传失败，请重试')
         }
       } catch (error) {
         console.error('Upload error:', error)
+        toast.error('图片上传失败，请重试')
       } finally {
-        setIsProcessing(false)
+        setIsUploading(false)
       }
     }
   }
@@ -368,9 +374,21 @@ export default function ImageEditor() {
                             height={240}
                             className="max-w-full max-h-full object-contain transition-transform group-hover:scale-105"
                           />
-                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center">
-                            <Maximize2 className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-8 w-8" />
-                          </div>
+                          
+                          {/* 上传状态覆盖层 */}
+                          {version.isOriginal && isUploading && (
+                            <div className="absolute inset-0 bg-purple-900 bg-opacity-75 flex flex-col items-center justify-center">
+                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-300 mb-2"></div>
+                              <div className="text-purple-100 text-sm font-medium">正在上传...</div>
+                            </div>
+                          )}
+                          
+                          {/* 悬停效果 */}
+                          {(!version.isOriginal || !isUploading) && (
+                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center">
+                              <Maximize2 className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-8 w-8" />
+                            </div>
+                          )}
                         </div>
 
                         {/* Image Label */}
@@ -477,7 +495,7 @@ export default function ImageEditor() {
                       key={ratio.value}
                       variant="outline"
                       onClick={() => handleAspectRatioClick(ratio.value)}
-                      disabled={isProcessing || imageVersions.length === 0}
+                      disabled={isProcessing || isUploading || imageVersions.length === 0}
                       className={`h-auto p-3 text-center ${
                         selectedAspectRatio === ratio.value && imageVersions.length > 0
                           ? "border-blue-500 bg-blue-50"
@@ -529,7 +547,7 @@ export default function ImageEditor() {
                           key={style.value}
                           variant="outline"
                           onClick={() => handleStyleClick(style.value)}
-                          disabled={isProcessing || imageVersions.length === 0}
+                          disabled={isProcessing || isUploading || imageVersions.length === 0}
                           className={`h-auto p-3 text-center ${
                             selectedStyle === style.value && imageVersions.length > 0
                               ? "border-purple-600 bg-purple-50"
@@ -551,12 +569,12 @@ export default function ImageEditor() {
                       value={currentPrompt}
                       onChange={(e) => setCurrentPrompt(e.target.value)}
                       className="min-h-24"
-                      disabled={isProcessing || imageVersions.length === 0}
+                      disabled={isProcessing || isUploading || imageVersions.length === 0}
                     />
 
                     <Button
                       onClick={handlePromptSubmit}
-                      disabled={isProcessing || imageVersions.length === 0 || !currentPrompt.trim()}
+                      disabled={isProcessing || isUploading || imageVersions.length === 0 || !currentPrompt.trim()}
                       className="w-full bg-purple-600 hover:bg-purple-700"
                     >
                       {isProcessing ? (
@@ -580,6 +598,8 @@ export default function ImageEditor() {
 
         <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
       </div>
+
+
 
       {/* Full Screen Image Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>

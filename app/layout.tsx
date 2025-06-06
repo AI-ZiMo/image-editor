@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
 import { StagewiseToolbar } from "@stagewise/toolbar-next";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
@@ -32,6 +33,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           {children}
+          <Toaster />
           {process.env.NODE_ENV === 'development' && (
             <StagewiseToolbar config={stagewiseConfig} />
           )}
