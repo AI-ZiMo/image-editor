@@ -365,6 +365,37 @@ export default function ImageEditor() {
               <Upload className="h-5 w-5 text-gray-600" />
               <h3 className="text-lg font-semibold">上传图片</h3>
             </div>
+            
+            {/* 动态提示 */}
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-4">
+              <div className="text-sm text-purple-700 font-medium transition-all duration-500 ease-in-out min-h-[20px] text-center">
+                {(() => {
+                  const tips = [
+                    "💡 提示：可以对最新编辑的图片进行二次编辑，创造更多可能！",
+                    "🔄 技巧：支持重复编辑，每次都能获得不同的艺术效果",
+                    "🗑️ 功能：可以删除不满意的图片，重新选择风格编辑",
+                    "✨ 窍门：尝试不同的预设风格，发现你的专属创作风格",
+                    "🎨 建议：结合自定义提示词，让AI更精准理解你的创意"
+                  ]
+                  
+                  const [currentTip, setCurrentTip] = useState(0)
+                  
+                  useEffect(() => {
+                    const interval = setInterval(() => {
+                      setCurrentTip(prev => (prev + 1) % tips.length)
+                    }, 3000)
+                    return () => clearInterval(interval)
+                  }, [])
+                  
+                  return (
+                    <div key={currentTip} className="animate-fade-in">
+                      {tips[currentTip]}
+                    </div>
+                  )
+                })()}
+              </div>
+            </div>
+            
             <div className="text-sm text-gray-500 mb-6">支持JPG、PNG等格式，建议图片大小不超过10MB</div>
 
             {/* Horizontal Scrolling Image Gallery */}
