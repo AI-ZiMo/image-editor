@@ -12,6 +12,13 @@ export async function POST(request: NextRequest) {
     // Create Supabase client
     const supabase = await createServerClient()
 
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    
+    if (userError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     // Download image from Replicate
     const imageResponse = await fetch(imageUrl)
     if (!imageResponse.ok) {
@@ -22,9 +29,9 @@ export async function POST(request: NextRequest) {
     const imageBuffer = await imageResponse.arrayBuffer()
     const uint8Array = new Uint8Array(imageBuffer)
 
-    // Generate unique filename
+    // Generate unique filename with user folder
     const fileName = `generated-${Date.now()}-${Math.random().toString(36).substring(2)}.png`
-    const filePath = `generated/${fileName}`
+    const filePath = `${user.id}/${fileName}` // 使用用户ID作为文件夹
 
     // Upload to Supabase Storage
     const { data, error } = await supabase.storage

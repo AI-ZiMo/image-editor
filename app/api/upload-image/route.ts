@@ -13,10 +13,17 @@ export async function POST(request: NextRequest) {
     // Create Supabase client
     const supabase = await createServerClient()
 
-    // Generate unique filename
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    
+    if (userError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Generate unique filename with user folder
     const fileExt = file.name.split('.').pop()
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
-    const filePath = `uploads/${fileName}`
+    const filePath = `${user.id}/${fileName}` // 使用用户ID作为文件夹
 
     // Convert File to ArrayBuffer
     const arrayBuffer = await file.arrayBuffer()
