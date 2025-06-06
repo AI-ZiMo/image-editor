@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createServerClient } from '@/lib/supabase/server'
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,30 +10,40 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
-    // Upload file to Replicate
-    const replicateFormData = new FormData()
-    replicateFormData.append('content', file)
+    // Create Supabase client
+    const supabase = await createServerClient()
 
-    const uploadResponse = await fetch('https://api.replicate.com/v1/files', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`,
-      },
-      body: replicateFormData,
-    })
+    // Generate unique filename
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
+    const filePath = `uploads/${fileName}`
 
-    if (!uploadResponse.ok) {
-      const error = await uploadResponse.text()
-      console.error('Replicate upload error:', error)
-      return NextResponse.json({ error: 'Failed to upload to Replicate' }, { status: 500 })
+    // Convert File to ArrayBuffer
+    const arrayBuffer = await file.arrayBuffer()
+    const uint8Array = new Uint8Array(arrayBuffer)
+
+    // Upload to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from('images')
+      .upload(filePath, uint8Array, {
+        contentType: file.type,
+        upsert: false
+      })
+
+    if (error) {
+      console.error('Supabase upload error:', error)
+      return NextResponse.json({ error: 'Failed to upload to storage' }, { status: 500 })
     }
 
-    const uploadResult = await uploadResponse.json()
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('images')
+      .getPublicUrl(filePath)
     
     return NextResponse.json({ 
       success: true, 
-      fileUrl: uploadResult.urls.get,
-      fileId: uploadResult.id 
+      fileUrl: publicUrl,
+      filePath: filePath
     })
     
   } catch (error) {

@@ -22,7 +22,8 @@ interface ImageVersion {
   style?: string
   prompt?: string
   isOriginal?: boolean
-  replicateFileUrl?: string // For Replicate file URL
+  replicateFileUrl?: string // For Replicate file URL or Supabase URL for editing
+  supabaseFilePath?: string // For Supabase storage path
 }
 
 const presetStyles = [
@@ -104,10 +105,15 @@ export default function ImageEditor() {
         const uploadResult = await uploadResponse.json()
         
         if (uploadResult.success) {
-          // Update the original image with Replicate file URL
+          // Update the original image with Supabase URLs
           setImageVersions(prev => prev.map(img => 
             img.isOriginal 
-              ? { ...img, replicateFileUrl: uploadResult.fileUrl }
+              ? { 
+                  ...img, 
+                  url: uploadResult.fileUrl, // Update display URL to Supabase
+                  replicateFileUrl: uploadResult.fileUrl, // Use Supabase URL for editing
+                  supabaseFilePath: uploadResult.filePath 
+                }
               : img
           ))
         } else {
@@ -173,22 +179,65 @@ export default function ImageEditor() {
           const statusResponse = await fetch(`/api/check-prediction?id=${predictionId}`)
           const statusResult = await statusResponse.json()
 
-                     if (statusResult.success) {
+                                if (statusResult.success) {
              if (statusResult.status === 'succeeded' && statusResult.output) {
-               // Add the new generated image
-               const newVersion: ImageVersion = {
-                 id: `generated-${Date.now()}`,
-                 url: statusResult.output, // Replicate returns direct URL string
-                 style: style,
-                 prompt: style ? undefined : prompt,
-                 replicateFileUrl: statusResult.output, // Store for future edits
+               try {
+                 // Store the generated image in Supabase
+                 const storeResponse = await fetch('/api/store-generated-image', {
+                   method: 'POST',
+                   headers: {
+                     'Content-Type': 'application/json',
+                   },
+                   body: JSON.stringify({
+                     imageUrl: statusResult.output
+                   }),
+                 })
+
+                 const storeResult = await storeResponse.json()
+
+                                   if (storeResult.success) {
+                    // Add the new generated image with Supabase URL
+                    const newVersion: ImageVersion = {
+                      id: `generated-${Date.now()}`,
+                      url: storeResult.storedUrl, // Use Supabase URL for display
+                      style: style,
+                      prompt: style ? undefined : prompt,
+                      replicateFileUrl: storeResult.storedUrl, // Store for future edits
+                      supabaseFilePath: storeResult.filePath,
+                    }
+
+                   setImageVersions((prev) => [...prev, newVersion])
+                 } else {
+                   console.error('Failed to store image:', storeResult.error)
+                   // Fallback to using Replicate URL directly
+                   const newVersion: ImageVersion = {
+                     id: `generated-${Date.now()}`,
+                     url: statusResult.output,
+                     style: style,
+                     prompt: style ? undefined : prompt,
+                     replicateFileUrl: statusResult.output,
+                   }
+
+                   setImageVersions((prev) => [...prev, newVersion])
+                 }
+               } catch (error) {
+                 console.error('Error storing image:', error)
+                 // Fallback to using Replicate URL directly
+                 const newVersion: ImageVersion = {
+                   id: `generated-${Date.now()}`,
+                   url: statusResult.output,
+                   style: style,
+                   prompt: style ? undefined : prompt,
+                   replicateFileUrl: statusResult.output,
+                 }
+
+                 setImageVersions((prev) => [...prev, newVersion])
                }
 
-              setImageVersions((prev) => [...prev, newVersion])
-              setCurrentPrompt("")
-              setSelectedStyle(null)
-              setIsProcessing(false)
-              return
+               setCurrentPrompt("")
+               setSelectedStyle(null)
+               setIsProcessing(false)
+               return
             } else if (statusResult.status === 'failed') {
               console.error('Prediction failed:', statusResult.error)
               setIsProcessing(false)
