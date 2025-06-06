@@ -59,23 +59,11 @@ export default function ImageEditor() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [generationMode, setGenerationMode] = useState<"style" | "prompt">("style")
-  const [user, setUser] = useState<any>(null)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [imageToDelete, setImageToDelete] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    const checkUser = async () => {
-      const supabase = createClient()
-      const { data, error } = await supabase.auth.getUser()
-  if (error || !data?.user) {
-        router.push("/login")
-        return
-      }
-      setUser(data.user)
-    }
-    checkUser()
-  }, [router])
+  // 认证检查已移至服务器端layout.tsx，此处不再需要
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -336,10 +324,6 @@ export default function ImageEditor() {
   }
 
   const latestImage = imageVersions[imageVersions.length - 1]
-
-  if (!user) {
-    return <div>加载中...</div>
-  }
 
   return (
     <>
