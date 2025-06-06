@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Download, Maximize2, Clock, Image as ImageIcon, ArrowLeft } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { ImageModal } from "@/components/image-modal"
 import Link from "next/link"
 
 interface HistoryProject {
@@ -41,6 +42,9 @@ export default function HistoryPage() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedImageInfo, setSelectedImageInfo] = useState<{style?: string, prompt?: string, createdAt: string} | null>(null)
+  const [currentImageIndex, setCurrentImageIndex] = useState<number>(0)
+  const [currentProjectImages, setCurrentProjectImages] = useState<Array<{url: string, info?: any}>>([])
+  const [currentProjectId, setCurrentProjectId] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 5
 
@@ -79,6 +83,27 @@ export default function HistoryPage() {
               style: "水彩画风格",
               aspectRatio: "16:9",
               createdAt: "2024-01-15T10:45:00Z"
+            },
+            {
+              id: "edit-4",
+              url: "https://images.unsplash.com/photo-1552374196-c4e7ffc6e126?w=400&h=300&fit=crop",
+              style: "油画风格",
+              aspectRatio: "4:3",
+              createdAt: "2024-01-15T10:50:00Z"
+            },
+            {
+              id: "edit-5",
+              url: "https://images.unsplash.com/photo-1484515991647-c5760fcecfc7?w=400&h=400&fit=crop",
+              prompt: "转换为像素艺术风格，8位游戏感",
+              aspectRatio: "1:1",
+              createdAt: "2024-01-15T10:55:00Z"
+            },
+            {
+              id: "edit-6",
+              url: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=225&h=400&fit=crop",
+              style: "赛博朋克",
+              aspectRatio: "9:16",
+              createdAt: "2024-01-15T11:00:00Z"
             }
           ]
         },
@@ -273,10 +298,49 @@ export default function HistoryPage() {
     }
   }
 
-  const handleImageClick = (imageUrl: string, imageInfo: {style?: string, prompt?: string, createdAt: string}) => {
+  const handleImageClick = (imageUrl: string, imageInfo: {style?: string, prompt?: string, createdAt: string}, projectId?: string) => {
+    if (projectId) {
+      // 找到对应的项目
+      const project = historyProjects.find(p => p.id === projectId)
+      if (project) {
+        // 构建图片数组（原图 + 编辑图）
+        const allImages = [
+          {
+            url: project.originalImage.url,
+            info: {
+              createdAt: project.originalImage.createdAt
+            }
+          },
+          ...project.editedImages.map(img => ({
+            url: img.url,
+            info: {
+              style: img.style,
+              prompt: img.prompt,
+              createdAt: img.createdAt
+            }
+          }))
+        ]
+        
+        // 找到当前图片的索引
+        const index = allImages.findIndex(img => img.url === imageUrl)
+        
+        setCurrentProjectImages(allImages)
+        setCurrentImageIndex(index >= 0 ? index : 0)
+        setCurrentProjectId(projectId)
+      }
+    }
+    
     setSelectedImage(imageUrl)
     setSelectedImageInfo(imageInfo)
     setIsModalOpen(true)
+  }
+
+  const handleNavigate = (index: number) => {
+    if (currentProjectImages[index]) {
+      setCurrentImageIndex(index)
+      setSelectedImage(currentProjectImages[index].url)
+      setSelectedImageInfo(currentProjectImages[index].info)
+    }
   }
 
   const handleDownload = async (imageUrl: string, imageName: string) => {
@@ -381,7 +445,7 @@ export default function HistoryPage() {
                           <div className="w-64 h-64 border-2 border-dashed border-gray-300 rounded-lg overflow-hidden relative bg-gray-50 flex items-center justify-center">
                             <div
                               className="relative w-full h-full flex items-center justify-center cursor-pointer"
-                              onClick={() => handleImageClick(project.originalImage.url, {createdAt: project.originalImage.createdAt})}
+                              onClick={() => handleImageClick(project.originalImage.url, {createdAt: project.originalImage.createdAt}, project.id)}
                             >
                               <Image
                                 src={project.originalImage.url}
@@ -417,7 +481,7 @@ export default function HistoryPage() {
                             <div className="w-64 h-64 border-2 border-dashed border-gray-300 rounded-lg overflow-hidden relative bg-gray-50 flex items-center justify-center">
                               <div
                                 className="relative w-full h-full flex items-center justify-center cursor-pointer"
-                                onClick={() => handleImageClick(editedImage.url, editedImage)}
+                                onClick={() => handleImageClick(editedImage.url, editedImage, project.id)}
                               >
                                 <Image
                                   src={editedImage.url}
@@ -498,63 +562,18 @@ export default function HistoryPage() {
         )}
       </div>
 
-      {/* Full Screen Image Modal */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="!max-w-4xl w-[90vw] h-[80vh] p-0">
-          <div className="flex items-center justify-between p-6 border-b">
-            <h2 className="text-xl font-semibold">历史记录详情</h2>
-            <div className="flex items-center space-x-3">
-              <Button
-                variant="outline"
-                onClick={() => selectedImage && handleDownload(selectedImage, `历史图片`)}
-                className="flex items-center space-x-2"
-              >
-                <Download className="h-4 w-4" />
-                <span>下载</span>
-              </Button>
-            </div>
-          </div>
-
-          <div className="flex-1 flex flex-col items-center justify-center p-8 bg-gray-50">
-            {selectedImage && (
-              <div className="flex flex-col items-center max-w-full max-h-full">
-                <div className="relative">
-                  <Image
-                    src={selectedImage}
-                    alt="历史图片"
-                    width={800}
-                    height={600}
-                    className="max-w-full max-h-[50vh] object-contain rounded-lg shadow-lg"
-                  />
-                </div>
-                
-                {selectedImageInfo && (
-                  <div className="mt-4 p-4 bg-white rounded-lg shadow-sm border max-w-2xl">
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center text-gray-500">
-                        <Clock className="h-4 w-4 mr-2" />
-                        {formatDate(selectedImageInfo.createdAt)}
-                      </div>
-                      {selectedImageInfo.style && (
-                        <div>
-                          <span className="font-medium text-gray-900">应用风格: </span>
-                          <span className="text-purple-600">{selectedImageInfo.style}</span>
-                        </div>
-                      )}
-                      {selectedImageInfo.prompt && (
-                        <div>
-                          <span className="font-medium text-gray-900">提示词: </span>
-                          <span className="text-gray-700">{selectedImageInfo.prompt}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+             {/* Image Modal */}
+       <ImageModal
+         isOpen={isModalOpen}
+         onClose={() => setIsModalOpen(false)}
+         imageUrl={selectedImage}
+         imageInfo={selectedImageInfo}
+         onDownload={handleDownload}
+         downloadFilename="历史图片"
+         images={currentProjectImages}
+         currentIndex={currentImageIndex}
+         onNavigate={handleNavigate}
+       />
     </>
   )
 } 

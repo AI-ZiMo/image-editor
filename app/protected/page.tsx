@@ -15,6 +15,7 @@ import { Upload, Sparkles, AlertCircle, Download, X, Maximize2, Check } from "lu
 import { toast } from "sonner"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Navbar } from "@/components/navbar"
+import { ImageModal } from "@/components/image-modal"
 import { createClient } from "@/lib/supabase/client"
 
 interface ImageVersion {
@@ -59,10 +60,12 @@ export default function ImageEditor() {
   const [selectedAspectRatio, setSelectedAspectRatio] = useState(aspectRatios[0].value)
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [currentImageIndex, setCurrentImageIndex] = useState<number>(0)
   const [generationMode, setGenerationMode] = useState<"style" | "prompt">("style")
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [imageToDelete, setImageToDelete] = useState<number | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const [uploadSuccess, setUploadSuccess] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // 认证检查已移至服务器端layout.tsx，此处不再需要
@@ -71,6 +74,7 @@ export default function ImageEditor() {
     const file = event.target.files?.[0]
     if (file) {
       setIsUploading(true)
+      setUploadSuccess(false)
       
       try {
         // Show local preview immediately
@@ -109,8 +113,14 @@ export default function ImageEditor() {
               : img
           ))
           
-          // 显示成功toast
+          // 显示成功状态和toast
+          setUploadSuccess(true)
           toast.success('图片上传成功！')
+          
+          // 2秒后隐藏成功状态
+          setTimeout(() => {
+            setUploadSuccess(false)
+          }, 2000)
         } else {
           console.error('Upload failed:', uploadResult.error)
           toast.error('图片上传失败，请重试')
@@ -294,8 +304,17 @@ export default function ImageEditor() {
   }
 
   const handleImageClick = (imageUrl: string) => {
+    const index = imageVersions.findIndex(version => version.url === imageUrl)
+    setCurrentImageIndex(index >= 0 ? index : 0)
     setSelectedImage(imageUrl)
     setIsModalOpen(true)
+  }
+
+  const handleNavigate = (index: number) => {
+    if (imageVersions[index]) {
+      setCurrentImageIndex(index)
+      setSelectedImage(imageVersions[index].url)
+    }
   }
 
   const handleDownload = async (imageUrl: string, imageName: string) => {
@@ -377,14 +396,24 @@ export default function ImageEditor() {
                           
                           {/* 上传状态覆盖层 */}
                           {version.isOriginal && isUploading && (
-                            <div className="absolute inset-0 bg-purple-900 bg-opacity-75 flex flex-col items-center justify-center">
-                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-300 mb-2"></div>
+                            <div className="absolute inset-0 bg-purple-600 bg-opacity-70 flex flex-col items-center justify-center rounded-lg">
+                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-200 mb-2"></div>
                               <div className="text-purple-100 text-sm font-medium">正在上传...</div>
                             </div>
                           )}
                           
+                          {/* 上传成功覆盖层 */}
+                          {version.isOriginal && uploadSuccess && (
+                            <div className="absolute inset-0 bg-green-600 bg-opacity-80 flex flex-col items-center justify-center rounded-lg transition-all duration-300">
+                              <div className="bg-white rounded-full p-2 mb-2">
+                                <Check className="h-6 w-6 text-green-600" />
+                              </div>
+                              <div className="text-white text-sm font-medium">上传成功！</div>
+                            </div>
+                          )}
+                          
                           {/* 悬停效果 */}
-                          {(!version.isOriginal || !isUploading) && (
+                          {(!version.isOriginal || (!isUploading && !uploadSuccess)) && (
                             <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center">
                               <Maximize2 className="text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-8 w-8" />
                             </div>
@@ -601,59 +630,33 @@ export default function ImageEditor() {
 
 
 
-      {/* Full Screen Image Modal */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="!max-w-6xl w-[95vw] h-[90vh] p-0 bg-white">
-          <div className="flex items-center justify-between p-6 border-b">
-            <h2 className="text-xl font-semibold">图片预览</h2>
-            <div className="flex items-center space-x-3">
-              <Button
-                variant="outline"
-                onClick={() => selectedImage && handleDownload(selectedImage, "图片")}
-                className="flex items-center space-x-2"
-              >
-                <Download className="h-4 w-4" />
-                <span>下载</span>
-              </Button>
-              <Button variant="ghost" size="icon" onClick={() => setIsModalOpen(false)}>
-                <X className="h-5 w-5" />
-              </Button>
-            </div>
-          </div>
-
-          <div className="flex-1 flex flex-col items-center justify-center p-8 bg-gray-50">
-            {selectedImage && (
-              <div className="flex flex-col items-center max-w-full max-h-full">
-                <div className="relative">
-                  <Image
-                    src={selectedImage || "/placeholder.svg"}
-                    alt="全屏图片"
-                    width={1200}
-                    height={900}
-                    className="max-w-full max-h-[60vh] object-contain rounded-lg shadow-lg"
-                  />
-                </div>
-                
-                {/* Full Style/Prompt Display in Modal */}
-                {(() => {
-                  const selectedVersion = imageVersions.find(v => v.url === selectedImage)
-                  if (selectedVersion && !selectedVersion.isOriginal && (selectedVersion.style || selectedVersion.prompt)) {
-                    return (
-                      <div className="mt-4 p-4 bg-white rounded-lg shadow-sm border max-w-2xl">
-                        <div className="text-sm text-gray-700">
-                          <span className="font-medium text-gray-900">应用效果: </span>
-                          {selectedVersion.style || selectedVersion.prompt}
-                        </div>
-                      </div>
-                    )
-                  }
-                  return null
-                })()}
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+             {/* Image Modal */}
+       <ImageModal
+         isOpen={isModalOpen}
+         onClose={() => setIsModalOpen(false)}
+         imageUrl={selectedImage}
+         imageInfo={(() => {
+           const selectedVersion = imageVersions.find(v => v.url === selectedImage)
+           if (selectedVersion && !selectedVersion.isOriginal) {
+             return {
+               style: selectedVersion.style,
+               prompt: selectedVersion.prompt
+             }
+           }
+           return null
+         })()}
+         onDownload={handleDownload}
+         downloadFilename="图片"
+         images={imageVersions.map(version => ({
+           url: version.url,
+           info: version.isOriginal ? undefined : {
+             style: version.style,
+             prompt: version.prompt
+           }
+         }))}
+         currentIndex={currentImageIndex}
+         onNavigate={handleNavigate}
+       />
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
@@ -662,7 +665,7 @@ export default function ImageEditor() {
             <div className="flex items-center space-x-2">
               <AlertCircle className="h-5 w-5 text-amber-500" />
               <h2 className="text-lg font-semibold">确认删除</h2>
-            </div>
+      </div>
             <p className="text-sm text-gray-600">
               确定要删除这张图片吗？此操作无法撤销。
             </p>
@@ -679,8 +682,8 @@ export default function ImageEditor() {
               >
                 删除
               </Button>
-            </div>
-          </div>
+      </div>
+    </div>
         </DialogContent>
       </Dialog>
     </>
