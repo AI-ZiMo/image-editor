@@ -1,16 +1,44 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Sparkles } from "lucide-react"
+import { Sparkles, User, LogOut } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import { createClient } from "@/lib/supabase/client"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface NavbarProps {
   showAuthButton?: boolean
+  user?: any
 }
 
-export function Navbar({ showAuthButton = true }: NavbarProps) {
+export function Navbar({ showAuthButton = true, user }: NavbarProps) {
   const router = useRouter()
+  const [currentUser, setCurrentUser] = useState(user)
+
+  useEffect(() => {
+    if (!user) {
+      const checkUser = async () => {
+        const supabase = createClient()
+        const { data } = await supabase.auth.getUser()
+        setCurrentUser(data.user)
+      }
+      checkUser()
+    }
+  }, [user])
+
+  const handleSignOut = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
 
   return (
     <header className="bg-white shadow-sm border-b border-purple-100">
@@ -35,6 +63,15 @@ export function Navbar({ showAuthButton = true }: NavbarProps) {
               <span className="relative z-10">首页</span>
               <div className="absolute inset-x-0 bottom-0 h-0.5 bg-purple-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-in-out"></div>
             </Link>
+            {currentUser && (
+              <Link 
+                href="/protected" 
+                className="text-gray-600 hover:text-purple-600 relative transition-all duration-300 ease-in-out group"
+              >
+                <span className="relative z-10">创作空间</span>
+                <div className="absolute inset-x-0 bottom-0 h-0.5 bg-purple-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-in-out"></div>
+              </Link>
+            )}
             <a 
               href="#" 
               className="text-gray-600 hover:text-purple-600 relative transition-all duration-300 ease-in-out group"
@@ -51,11 +88,47 @@ export function Navbar({ showAuthButton = true }: NavbarProps) {
             </a>
           </nav>
           
-          {showAuthButton && (
-            <Button className="bg-purple-600 hover:bg-purple-700 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105" onClick={() => router.push('/login')}>
-              登录/注册
-            </Button>
-          )}
+          {/* 右侧用户信息或登录按钮 */}
+          <div className="flex items-center space-x-4">
+            {currentUser ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center space-x-2 hover:bg-purple-50">
+                    <div className="bg-purple-100 p-1 rounded-full">
+                      <User className="h-4 w-4 text-purple-600" />
+                    </div>
+                    <span className="text-sm font-medium text-gray-700 max-w-32 truncate">
+                      {currentUser.email}
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="px-2 py-1.5">
+                    <p className="text-sm font-medium">{currentUser.email}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {currentUser.user_metadata?.full_name || '用户'}
+                    </p>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => router.push('/protected')}>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    创作空间
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut} className="text-red-600">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    退出登录
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              showAuthButton && (
+                <Button className="bg-purple-600 hover:bg-purple-700 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105" onClick={() => router.push('/login')}>
+                  登录/注册
+                </Button>
+              )
+            )}
+          </div>
         </div>
       </div>
     </header>
