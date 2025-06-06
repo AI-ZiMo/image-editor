@@ -1,6 +1,11 @@
 import { createServerClient as createSupabaseServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
+/**
+ * Creates and returns a Supabase server client configured with cookie-based authentication.
+ * Uses environment variables NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY for configuration.
+ * Handles cookie operations (get, set, remove) through the provided cookie store.
+ */
 export async function createServerClient() {
   const cookieStore = await cookies();
 

@@ -203,23 +203,25 @@ export default function ImageEditor() {
 
                                    if (storeResult.success) {
                     // Add the new generated image with Supabase URL
-                    const newVersion: ImageVersion = {
-                      id: `generated-${Date.now()}`,
-                      url: storeResult.storedUrl, // Use Supabase URL for display
-                      style: style,
-                      prompt: style ? undefined : prompt,
-                      replicateFileUrl: storeResult.storedUrl, // Store for future edits
-                      supabaseFilePath: storeResult.filePath,
-                    }
+                                         const styleObj = presetStyles.find(s => s.value === style)
+                     const newVersion: ImageVersion = {
+                       id: `generated-${Date.now()}`,
+                       url: storeResult.storedUrl, // Use Supabase URL for display
+                       style: styleObj ? styleObj.name : style, // 使用中文名称
+                       prompt: style ? undefined : prompt,
+                       replicateFileUrl: storeResult.storedUrl, // Store for future edits
+                       supabaseFilePath: storeResult.filePath,
+                     }
 
                    setImageVersions((prev) => [...prev, newVersion])
                  } else {
                    console.error('Failed to store image:', storeResult.error)
                    // Fallback to using Replicate URL directly
+                   const styleObj = presetStyles.find(s => s.value === style)
                    const newVersion: ImageVersion = {
                      id: `generated-${Date.now()}`,
                      url: statusResult.output,
-                     style: style,
+                     style: styleObj ? styleObj.name : style, // 使用中文名称
                      prompt: style ? undefined : prompt,
                      replicateFileUrl: statusResult.output,
                    }
@@ -229,10 +231,11 @@ export default function ImageEditor() {
                } catch (error) {
                  console.error('Error storing image:', error)
                  // Fallback to using Replicate URL directly
+                 const styleObj = presetStyles.find(s => s.value === style)
                  const newVersion: ImageVersion = {
                    id: `generated-${Date.now()}`,
                    url: statusResult.output,
-                   style: style,
+                   style: styleObj ? styleObj.name : style, // 使用中文名称
                    prompt: style ? undefined : prompt,
                    replicateFileUrl: statusResult.output,
                  }
@@ -292,10 +295,12 @@ export default function ImageEditor() {
   const handleStyleClick = (styleValue: string) => {
     if (imageVersions.length > 0) {
       setSelectedStyle(styleValue)
-      const style = presetStyles.find((s) => s.value === styleValue)
-      if (style) {
-        editImageWithReplicate("", styleValue)
-      }
+    }
+  }
+
+  const handleStartEditing = () => {
+    if (imageVersions.length > 0 && selectedStyle) {
+      editImageWithReplicate("", selectedStyle)
     }
   }
 
@@ -590,6 +595,30 @@ export default function ImageEditor() {
                         </Button>
                       ))}
                     </div>
+
+                    {/* 开始编辑按钮 */}
+                    <div className="space-y-2">
+                      <Button
+                        onClick={handleStartEditing}
+                        disabled={isProcessing || isUploading || imageVersions.length === 0 || !selectedStyle}
+                        className="w-full bg-purple-600 hover:bg-purple-700"
+                      >
+                        {isProcessing ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            AI处理中...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            开始编辑
+                          </>
+                        )}
+                      </Button>
+                      <div className="text-xs text-center text-gray-500">
+                        每次编辑消耗 1 个积分
+                      </div>
+                    </div>
                   </TabsContent>
 
                   <TabsContent value="prompt" className="space-y-4">
@@ -601,23 +630,28 @@ export default function ImageEditor() {
                       disabled={isProcessing || isUploading || imageVersions.length === 0}
                     />
 
-                    <Button
-                      onClick={handlePromptSubmit}
-                      disabled={isProcessing || isUploading || imageVersions.length === 0 || !currentPrompt.trim()}
-                      className="w-full bg-purple-600 hover:bg-purple-700"
-                    >
-                      {isProcessing ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          AI处理中...
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="w-4 h-4 mr-2" />
-                          开始AI编辑
-                        </>
-                      )}
-                    </Button>
+                    <div className="space-y-2">
+                      <Button
+                        onClick={handlePromptSubmit}
+                        disabled={isProcessing || isUploading || imageVersions.length === 0 || !currentPrompt.trim()}
+                        className="w-full bg-purple-600 hover:bg-purple-700"
+                      >
+                        {isProcessing ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            AI处理中...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            开始AI编辑
+                          </>
+                        )}
+                      </Button>
+                      <div className="text-xs text-center text-gray-500">
+                        每次编辑消耗 1 个积分
+                      </div>
+                    </div>
                   </TabsContent>
                 </Tabs>
               </CardContent>

@@ -80,7 +80,14 @@ export function Navbar({ showAuthButton = true, user }: NavbarProps) {
                   <div className="absolute inset-x-0 bottom-0 h-0.5 bg-purple-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-in-out"></div>
                 </Link>
               </>
-            )}
+                            )}
+            <Link 
+              href="/pricing" 
+              className="text-gray-600 hover:text-purple-600 relative transition-all duration-300 ease-in-out group"
+            >
+              <span className="relative z-10">定价</span>
+              <div className="absolute inset-x-0 bottom-0 h-0.5 bg-purple-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-in-out"></div>
+            </Link>
             <a 
               href="#" 
               className="text-gray-600 hover:text-purple-600 relative transition-all duration-300 ease-in-out group"
@@ -126,6 +133,10 @@ export function Navbar({ showAuthButton = true, user }: NavbarProps) {
                   <DropdownMenuItem onClick={() => router.push('/protected/history')}>
                     <Clock className="mr-2 h-4 w-4" />
                     历史记录
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/pricing')}>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    积分定价
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut} className="text-red-600">
