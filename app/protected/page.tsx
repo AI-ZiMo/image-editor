@@ -66,7 +66,27 @@ export default function ImageEditor() {
   const [imageToDelete, setImageToDelete] = useState<number | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadSuccess, setUploadSuccess] = useState(false)
+  const [currentTip, setCurrentTip] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // 动态提示内容
+  const tips = [
+    "💡 提示：可以对最新编辑的图片进行二次编辑，创造更多可能！",
+    "🔄 技巧：支持重复编辑，每次都能获得不同的艺术效果",
+    "🗑️ 功能：可以删除不满意的图片，重新选择风格编辑",
+    "✨ 窍门：尝试不同的预设风格，发现你的专属创作风格",
+    "🎨 建议：结合自定义提示词，让AI更精准理解你的创意"
+  ]
+
+  // 处理提示轮换 (处理中和上传中都会显示)
+  useEffect(() => {
+    if (isProcessing || isUploading) {
+      const interval = setInterval(() => {
+        setCurrentTip(prev => (prev + 1) % tips.length)
+      }, 3000)
+      return () => clearInterval(interval)
+    }
+  }, [isProcessing, isUploading, tips.length])
 
   // 认证检查已移至服务器端layout.tsx，此处不再需要
 
@@ -362,39 +382,11 @@ export default function ImageEditor() {
         <Card className="border border-gray-200 shadow-sm mb-8">
           <CardContent className="p-6">
             <div className="flex items-center space-x-2 mb-4">
-              <Upload className="h-5 w-5 text-gray-600" />
-              <h3 className="text-lg font-semibold">上传图片</h3>
+              <div className="bg-purple-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">1</div>
+              <h3 className="text-lg font-semibold">第一步：选择图片</h3>
             </div>
             
-            {/* 动态提示 */}
-            <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-4">
-              <div className="text-sm text-purple-700 font-medium transition-all duration-500 ease-in-out min-h-[20px] text-center">
-                {(() => {
-                  const tips = [
-                    "💡 提示：可以对最新编辑的图片进行二次编辑，创造更多可能！",
-                    "🔄 技巧：支持重复编辑，每次都能获得不同的艺术效果",
-                    "🗑️ 功能：可以删除不满意的图片，重新选择风格编辑",
-                    "✨ 窍门：尝试不同的预设风格，发现你的专属创作风格",
-                    "🎨 建议：结合自定义提示词，让AI更精准理解你的创意"
-                  ]
-                  
-                  const [currentTip, setCurrentTip] = useState(0)
-                  
-                  useEffect(() => {
-                    const interval = setInterval(() => {
-                      setCurrentTip(prev => (prev + 1) % tips.length)
-                    }, 3000)
-                    return () => clearInterval(interval)
-                  }, [])
-                  
-                  return (
-                    <div key={currentTip} className="animate-fade-in">
-                      {tips[currentTip]}
-                    </div>
-                  )
-                })()}
-              </div>
-            </div>
+
             
             <div className="text-sm text-gray-500 mb-6">支持JPG、PNG等格式，建议图片大小不超过10MB</div>
 
@@ -432,9 +424,18 @@ export default function ImageEditor() {
                           
                           {/* 上传状态覆盖层 */}
                           {version.isOriginal && isUploading && (
-                            <div className="absolute inset-0 bg-purple-600 bg-opacity-70 flex flex-col items-center justify-center rounded-lg">
-                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-200 mb-2"></div>
-                              <div className="text-purple-100 text-sm font-medium">正在上传...</div>
+                            <div className="absolute inset-0 bg-purple-600 bg-opacity-70 flex flex-col items-center justify-center rounded-lg p-3">
+                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-200 mb-3"></div>
+                              <div className="text-purple-100 text-sm font-medium mb-3">正在上传...</div>
+                              
+                              {/* 上传中的动态提示 */}
+                              <div className="bg-purple-500 bg-opacity-60 border border-purple-300 rounded-lg p-2 w-full">
+                                <div className="text-xs text-purple-100 font-medium transition-all duration-500 ease-in-out min-h-[16px] text-center">
+                                  <div key={currentTip} className="animate-fade-in">
+                                    {tips[currentTip]}
+                                  </div>
+                                </div>
+                              </div>
                             </div>
                           )}
                           
@@ -500,7 +501,7 @@ export default function ImageEditor() {
                       {/* Style/Prompt Display for Generated Images */}
                       {!version.isOriginal && (version.style || version.prompt) && (
                         <div className="mt-2 px-2">
-                          <div className="text-xs text-gray-600 truncate max-w-full" title={version.style || version.prompt}>
+                          <div className="text-xs text-gray-600 truncate max-w-full text-center" title={version.style || version.prompt}>
                             {version.style || version.prompt}
                           </div>
                         </div>
@@ -525,11 +526,20 @@ export default function ImageEditor() {
 
                 {/* Processing Indicator */}
                 {isProcessing && (
-                  <div className="flex-shrink-0 w-64 h-64 border-2 border-dashed border-purple-300 rounded-lg flex flex-col items-center justify-center">
+                  <div className="flex-shrink-0 w-64 h-64 border-2 border-dashed border-purple-300 rounded-lg flex flex-col items-center justify-center p-4">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mb-4"></div>
-                    <div className="text-purple-600 text-center">
+                    <div className="text-purple-600 text-center mb-4">
                       <div className="font-medium">AI处理中</div>
                       <div className="text-sm mt-1">请耐心等待...</div>
+                    </div>
+                    
+                    {/* 处理中的动态提示 */}
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 w-full">
+                      <div className="text-xs text-purple-700 font-medium transition-all duration-500 ease-in-out min-h-[16px] text-center">
+                        <div key={currentTip} className="animate-fade-in">
+                          {tips[currentTip]}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -544,7 +554,10 @@ export default function ImageEditor() {
           <div className="lg:col-span-4">
             <Card className="border border-gray-200 shadow-sm">
               <CardContent className="p-6">
-                <h3 className="text-lg font-semibold mb-4">生成图片比例</h3>
+                <div className="flex items-center space-x-2 mb-4">
+                  <div className="bg-purple-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">2</div>
+                  <h3 className="text-lg font-semibold">第二步：生成设置</h3>
+                </div>
                 <div className="text-sm text-gray-500 mb-4">选择输出图片的宽高比例</div>
 
                 {imageVersions.length === 0 && (
@@ -585,11 +598,12 @@ export default function ImageEditor() {
           <div className="lg:col-span-6">
             <Card className="border border-gray-200 shadow-sm">
               <CardContent className="p-6">
-                <h3 className="text-lg font-semibold mb-4">生成命令</h3>
+                <div className="flex items-center space-x-2 mb-4">
+                  <div className="bg-purple-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">3</div>
+                  <h3 className="text-lg font-semibold">第三步：生成命令</h3>
+                </div>
                 <div className="text-sm text-gray-500 mb-4">
-                  {latestImage && !latestImage.isOriginal
-                    ? `基于最新生成的图片进行修改`
-                    : "选择预设风格或输入自定义提示词"}
+                  点击下方选择相应的风格和提示词，然后点击编辑按钮开始编辑
                 </div>
 
                 {imageVersions.length === 0 && (
@@ -606,7 +620,7 @@ export default function ImageEditor() {
                   </TabsList>
 
                   <TabsContent value="style" className="space-y-4">
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-3 gap-2 justify-items-center">
                       {presetStyles.map((style) => (
                         <Button
                           key={style.value}
@@ -647,7 +661,7 @@ export default function ImageEditor() {
                         )}
                       </Button>
                       <div className="text-xs text-center text-gray-500">
-                        每次编辑消耗 1 个积分
+                        每次编辑消耗 <span className="text-purple-600 font-semibold">1 个积分</span>
                       </div>
                     </div>
                   </TabsContent>
@@ -680,7 +694,7 @@ export default function ImageEditor() {
                         )}
                       </Button>
                       <div className="text-xs text-center text-gray-500">
-                        每次编辑消耗 1 个积分
+                        每次编辑消耗 <span className="text-purple-600 font-semibold">1 个积分</span>
                       </div>
                     </div>
                   </TabsContent>
