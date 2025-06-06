@@ -7,6 +7,12 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('images', 'images', true)
 ON CONFLICT (id) DO NOTHING;
 
+-- 删除现有策略（如果存在）以便重新创建
+DROP POLICY IF EXISTS "Authenticated users can upload images" ON storage.objects;
+DROP POLICY IF EXISTS "Anyone can view images" ON storage.objects;
+DROP POLICY IF EXISTS "Users can delete own images" ON storage.objects;
+DROP POLICY IF EXISTS "Users can update own images" ON storage.objects;
+
 -- 设置存储桶的 RLS 策略
 -- 允许已认证用户上传图片到自己的文件夹
 CREATE POLICY "Authenticated users can upload images" ON storage.objects
