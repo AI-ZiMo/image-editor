@@ -441,7 +441,7 @@ export default function ImageEditor() {
 
       {/* Full Screen Image Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-6xl w-[95vw] h-[90vh] p-0 bg-white">
+        <DialogContent className="!max-w-6xl w-[95vw] h-[90vh] p-0 bg-white">
           <div className="flex items-center justify-between p-6 border-b">
             <h2 className="text-xl font-semibold">图片预览</h2>
             <div className="flex items-center space-x-3">
