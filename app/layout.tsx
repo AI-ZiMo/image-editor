@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import { StagewiseToolbar } from "@stagewise/toolbar-next";
 import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
@@ -19,6 +20,10 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
+const stagewiseConfig = {
+  plugins: []
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -34,6 +39,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           {children}
+          {process.env.NODE_ENV === 'development' && (
+            <StagewiseToolbar config={stagewiseConfig} />
+          )}
         </ThemeProvider>
       </body>
     </html>

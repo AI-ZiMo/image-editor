@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { useState, useRef } from "react"
+import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -11,6 +12,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Upload, Sparkles, AlertCircle, Download, X, Maximize2, Check } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Navbar } from "@/components/navbar"
 
 interface ImageVersion {
   id: string
@@ -63,6 +65,7 @@ const unsplashImages = [
 ]
 
 export default function ImageEditor() {
+  const router = useRouter()
   const [imageVersions, setImageVersions] = useState<ImageVersion[]>([])
   const [currentPrompt, setCurrentPrompt] = useState("")
   const [isProcessing, setIsProcessing] = useState(false)
@@ -178,37 +181,8 @@ export default function ImageEditor() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-2">
-              <div className="bg-purple-600 text-white p-2 rounded-lg">
-                <Sparkles className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="text-xl font-bold text-purple-600">魔图工坊</div>
-                <div className="text-xs text-gray-500">AI图片风格转换</div>
-              </div>
-            </div>
-            <nav className="hidden md:flex space-x-8">
-              <a href="#" className="text-gray-600 hover:text-gray-900">
-                首页
-              </a>
-              <a href="#" className="text-gray-600 hover:text-gray-900">
-                关于我们
-              </a>
-              <a href="#" className="text-gray-600 hover:text-gray-900">
-                常见问题
-              </a>
-            </nav>
-            <Button className="bg-purple-600 hover:bg-purple-700" onClick={() => fileInputRef.current?.click()}>
-              开始创作
-            </Button>
-          </div>
-        </div>
-      </header>
-
+      <Navbar />
+      
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Image Gallery Section */}
         <Card className="border border-gray-200 shadow-sm mb-8">
@@ -276,7 +250,7 @@ export default function ImageEditor() {
 
                       {/* Latest Image Indicator */}
                       {index === imageVersions.length - 1 && !version.isOriginal && (
-                        <div className="absolute -top-2 -right-2 bg-purple-600 text-white text-xs px-2 py-1 rounded-full">
+                        <div className="absolute top-1 -right-2 bg-purple-600 text-white text-xs px-2 py-1 rounded-full shadow-md">
                           最新
                         </div>
                       )}
