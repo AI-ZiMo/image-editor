@@ -60,6 +60,8 @@ export default function ImageEditor() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [generationMode, setGenerationMode] = useState<"style" | "prompt">("style")
   const [user, setUser] = useState<any>(null)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [imageToDelete, setImageToDelete] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -319,6 +321,20 @@ export default function ImageEditor() {
     }
   }
 
+  const handleDeleteConfirm = (deleteIndex: number) => {
+    setImageToDelete(deleteIndex)
+    setDeleteConfirmOpen(true)
+  }
+
+  const handleDeleteFromIndex = () => {
+    if (imageToDelete !== null) {
+      // Remove only the specific image at the index
+      setImageVersions(prev => prev.filter((_, index) => index !== imageToDelete))
+      setDeleteConfirmOpen(false)
+      setImageToDelete(null)
+    }
+  }
+
   const latestImage = imageVersions[imageVersions.length - 1]
 
   if (!user) {
@@ -390,12 +406,36 @@ export default function ImageEditor() {
                         >
                           <Download className="h-3 w-3" />
                         </Button>
+
+                        {/* Delete Button for Generated Images */}
+                        {!version.isOriginal && (
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="absolute top-2 right-12 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDeleteConfirm(index)
+                            }}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        )}
                       </div>
 
                       {/* Latest Image Indicator */}
                       {index === imageVersions.length - 1 && !version.isOriginal && (
                         <div className="absolute top-1 -right-2 bg-purple-600 text-white text-xs px-2 py-1 rounded-full shadow-md">
                           最新
+                        </div>
+                      )}
+
+                      {/* Style/Prompt Display for Generated Images */}
+                      {!version.isOriginal && (version.style || version.prompt) && (
+                        <div className="mt-2 px-2">
+                          <div className="text-xs text-gray-600 truncate max-w-full" title={version.style || version.prompt}>
+                            {version.style || version.prompt}
+                          </div>
                         </div>
                       )}
 
@@ -575,21 +615,68 @@ export default function ImageEditor() {
                 <X className="h-5 w-5" />
               </Button>
             </div>
-      </div>
+          </div>
 
-          <div className="flex-1 flex items-center justify-center p-8 bg-gray-50">
+          <div className="flex-1 flex flex-col items-center justify-center p-8 bg-gray-50">
             {selectedImage && (
-              <div className="relative max-w-full max-h-full">
-                <Image
-                  src={selectedImage || "/placeholder.svg"}
-                  alt="全屏图片"
-                  width={1200}
-                  height={900}
-                  className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-lg"
-                />
-      </div>
+              <div className="flex flex-col items-center max-w-full max-h-full">
+                <div className="relative">
+                  <Image
+                    src={selectedImage || "/placeholder.svg"}
+                    alt="全屏图片"
+                    width={1200}
+                    height={900}
+                    className="max-w-full max-h-[60vh] object-contain rounded-lg shadow-lg"
+                  />
+                </div>
+                
+                {/* Full Style/Prompt Display in Modal */}
+                {(() => {
+                  const selectedVersion = imageVersions.find(v => v.url === selectedImage)
+                  if (selectedVersion && !selectedVersion.isOriginal && (selectedVersion.style || selectedVersion.prompt)) {
+                    return (
+                      <div className="mt-4 p-4 bg-white rounded-lg shadow-sm border max-w-2xl">
+                        <div className="text-sm text-gray-700">
+                          <span className="font-medium text-gray-900">应用效果: </span>
+                          {selectedVersion.style || selectedVersion.prompt}
+                        </div>
+                      </div>
+                    )
+                  }
+                  return null
+                })()}
+              </div>
             )}
-    </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent className="sm:max-w-md">
+          <div className="flex flex-col space-y-4">
+            <div className="flex items-center space-x-2">
+              <AlertCircle className="h-5 w-5 text-amber-500" />
+              <h2 className="text-lg font-semibold">确认删除</h2>
+            </div>
+            <p className="text-sm text-gray-600">
+              确定要删除这张图片吗？此操作无法撤销。
+            </p>
+            <div className="flex space-x-3 justify-end">
+              <Button 
+                variant="outline" 
+                onClick={() => setDeleteConfirmOpen(false)}
+              >
+                取消
+              </Button>
+              <Button 
+                variant="destructive" 
+                onClick={handleDeleteFromIndex}
+              >
+                删除
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </>
