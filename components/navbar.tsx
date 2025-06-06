@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Sparkles, User, LogOut } from "lucide-react"
+import { Sparkles, User, LogOut, Clock } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -64,13 +64,22 @@ export function Navbar({ showAuthButton = true, user }: NavbarProps) {
               <div className="absolute inset-x-0 bottom-0 h-0.5 bg-purple-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-in-out"></div>
             </Link>
             {currentUser && (
-              <Link 
-                href="/protected" 
-                className="text-gray-600 hover:text-purple-600 relative transition-all duration-300 ease-in-out group"
-              >
-                <span className="relative z-10">创作空间</span>
-                <div className="absolute inset-x-0 bottom-0 h-0.5 bg-purple-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-in-out"></div>
-              </Link>
+              <>
+                <Link 
+                  href="/protected" 
+                  className="text-gray-600 hover:text-purple-600 relative transition-all duration-300 ease-in-out group"
+                >
+                  <span className="relative z-10">创作空间</span>
+                  <div className="absolute inset-x-0 bottom-0 h-0.5 bg-purple-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-in-out"></div>
+                </Link>
+                <Link 
+                  href="/protected/history" 
+                  className="text-gray-600 hover:text-purple-600 relative transition-all duration-300 ease-in-out group"
+                >
+                  <span className="relative z-10">历史记录</span>
+                  <div className="absolute inset-x-0 bottom-0 h-0.5 bg-purple-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-in-out"></div>
+                </Link>
+              </>
             )}
             <a 
               href="#" 
@@ -113,6 +122,10 @@ export function Navbar({ showAuthButton = true, user }: NavbarProps) {
                   <DropdownMenuItem onClick={() => router.push('/protected')}>
                     <Sparkles className="mr-2 h-4 w-4" />
                     创作空间
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/protected/history')}>
+                    <Clock className="mr-2 h-4 w-4" />
+                    历史记录
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut} className="text-red-600">
