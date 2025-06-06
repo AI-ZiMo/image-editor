@@ -22,18 +22,19 @@ interface ImageVersion {
   style?: string
   prompt?: string
   isOriginal?: boolean
+  replicateFileUrl?: string // For Replicate file URL
 }
 
 const presetStyles = [
-  { name: "吉卜力风格", value: "ghibli", description: "温馨手绘" },
-  { name: "水晶球风格", value: "crystal-ball", description: "梦幻水晶" },
-  { name: "水彩画风格", value: "watercolor", description: "柔和水彩" },
-  { name: "油画风格", value: "oil-painting", description: "经典油画" },
+  { name: "吉卜力风格", value: "Studio Ghibli style", description: "温馨手绘" },
+  { name: "水彩画风格", value: "watercolor painting", description: "柔和水彩" },
+  { name: "油画风格", value: "oil painting", description: "经典油画" },
   { name: "赛博朋克", value: "cyberpunk", description: "未来科技" },
-  { name: "古典艺术", value: "classical-art", description: "古典艺术" },
-  { name: "动漫风格", value: "anime", description: "日式动漫" },
-  { name: "素描风格", value: "sketch", description: "铅笔素描" },
-  { name: "卡通风格", value: "cartoon", description: "可爱卡通" },
+  { name: "动漫风格", value: "anime style", description: "日式动漫" },
+  { name: "素描风格", value: "pencil sketch", description: "铅笔素描" },
+  { name: "梵高风格", value: "Van Gogh style", description: "印象派" },
+  { name: "像素艺术", value: "pixel art", description: "8位像素" },
+  { name: "黑白照片", value: "black and white photography", description: "经典黑白" },
 ]
 
 const aspectRatios = [
@@ -45,26 +46,7 @@ const aspectRatios = [
   { name: "3:4", label: "3:4", value: "3:4", description: "竖版" },
 ]
 
-// Unsplash图片ID数组，包含不同比例的图片
-const unsplashImages = [
-  // 横屏图片 (16:9 或类似比例)
-  { id: "photo-1506905925346-21bda4d32df4", aspect: "landscape" }, // 山景
-  { id: "photo-1518837695005-2083093ee35b", aspect: "landscape" }, // 海滩
-  { id: "photo-1441974231531-c6227db76b6e", aspect: "landscape" }, // 森林
-  { id: "photo-1470071459604-3b5ec3a7fe05", aspect: "landscape" }, // 星空
-  { id: "photo-1501594907352-04cda38ebc29", aspect: "landscape" }, // 湖泊
 
-  // 竖屏图片 (9:16 或类似比例)
-  { id: "photo-1544005313-94ddf0286df2", aspect: "portrait" }, // 人像
-  { id: "photo-1507003211169-0a1dd7228f2d", aspect: "portrait" }, // 人像
-  { id: "photo-1494790108755-2616c9c0e8e0", aspect: "portrait" }, // 人像
-  { id: "photo-1517841905240-472988babdf9", aspect: "portrait" }, // 人像
-  { id: "photo-1524504388940-b1c1722653e1", aspect: "portrait" }, // 人像
-
-  // 正方形图片 (1:1)
-  { id: "photo-1469474968028-56623f02e42e", aspect: "square" }, // 自然
-  { id: "photo-1506905925346-21bda4d32df4", aspect: "square" }, // 风景
-]
 
 export default function ImageEditor() {
   const router = useRouter()
@@ -92,68 +74,163 @@ export default function ImageEditor() {
     checkUser()
   }, [router])
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const originalImage: ImageVersion = {
-          id: `original-${Date.now()}`,
-          url: e.target?.result as string,
-          isOriginal: true,
+      setIsProcessing(true)
+      
+      try {
+        // Show local preview immediately
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          const originalImage: ImageVersion = {
+            id: `original-${Date.now()}`,
+            url: e.target?.result as string,
+            isOriginal: true,
+          }
+          setImageVersions([originalImage])
         }
-        setImageVersions([originalImage])
+        reader.readAsDataURL(file)
+
+        // Upload to Replicate
+        const formData = new FormData()
+        formData.append('file', file)
+        
+        const uploadResponse = await fetch('/api/upload-image', {
+          method: 'POST',
+          body: formData,
+        })
+        
+        const uploadResult = await uploadResponse.json()
+        
+        if (uploadResult.success) {
+          // Update the original image with Replicate file URL
+          setImageVersions(prev => prev.map(img => 
+            img.isOriginal 
+              ? { ...img, replicateFileUrl: uploadResult.fileUrl }
+              : img
+          ))
+        } else {
+          console.error('Upload failed:', uploadResult.error)
+          // Could show error toast here
+        }
+      } catch (error) {
+        console.error('Upload error:', error)
+      } finally {
+        setIsProcessing(false)
       }
-      reader.readAsDataURL(file)
     }
   }
 
-  const simulateImageEdit = async (prompt: string, style?: string) => {
+  const editImageWithReplicate = async (prompt: string, style?: string) => {
     if (imageVersions.length === 0) return
+
+    // Get the latest image to use as input (either original or last generated)
+    const latestImage = imageVersions[imageVersions.length - 1]
+    const inputImageUrl = latestImage.replicateFileUrl || latestImage.url
+
+    if (!inputImageUrl) {
+      console.error('No input image URL available')
+      return
+    }
 
     setIsProcessing(true)
 
-    // 模拟API调用延迟
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    try {
+      // Combine style and prompt if both exist
+      const finalPrompt = style 
+        ? `Apply ${style} style. ${prompt}`.trim()
+        : prompt
 
-    // 随机选择不同比例的图片
-    const randomImage = unsplashImages[Math.floor(Math.random() * unsplashImages.length)]
+      // Start image editing
+      const editResponse = await fetch('/api/edit-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          inputImage: inputImageUrl,
+          prompt: finalPrompt,
+          aspectRatio: selectedAspectRatio === "match" ? "match_input_image" : selectedAspectRatio,
+        }),
+      })
 
-    // 根据图片比例设置不同的尺寸参数
-    let imageUrl = ""
-    switch (randomImage.aspect) {
-      case "portrait":
-        // 竖屏图片 (9:16 比例)
-        imageUrl = `https://images.unsplash.com/${randomImage.id}?w=600&h=800&fit=crop&v=${Date.now()}`
-        break
-      case "landscape":
-        // 横屏图片 (16:9 比例)
-        imageUrl = `https://images.unsplash.com/${randomImage.id}?w=800&h=600&fit=crop&v=${Date.now()}`
-        break
-      case "square":
-        // 正方形图片 (1:1 比例)
-        imageUrl = `https://images.unsplash.com/${randomImage.id}?w=800&h=800&fit=crop&v=${Date.now()}`
-        break
-      default:
-        imageUrl = `https://images.unsplash.com/${randomImage.id}?w=800&h=600&fit=crop&v=${Date.now()}`
+      const editResult = await editResponse.json()
+
+      if (!editResult.success) {
+        console.error('Edit failed:', editResult.error)
+        setIsProcessing(false)
+        return
+      }
+
+      // Poll for completion
+      const predictionId = editResult.predictionId
+      let attempts = 0
+      const maxAttempts = 60 // 5 minutes with 5-second intervals
+
+      const pollForResult = async (): Promise<void> => {
+        try {
+          const statusResponse = await fetch(`/api/check-prediction?id=${predictionId}`)
+          const statusResult = await statusResponse.json()
+
+                     if (statusResult.success) {
+             if (statusResult.status === 'succeeded' && statusResult.output) {
+               // Add the new generated image
+               const newVersion: ImageVersion = {
+                 id: `generated-${Date.now()}`,
+                 url: statusResult.output, // Replicate returns direct URL string
+                 style: style,
+                 prompt: style ? undefined : prompt,
+                 replicateFileUrl: statusResult.output, // Store for future edits
+               }
+
+              setImageVersions((prev) => [...prev, newVersion])
+              setCurrentPrompt("")
+              setSelectedStyle(null)
+              setIsProcessing(false)
+              return
+            } else if (statusResult.status === 'failed') {
+              console.error('Prediction failed:', statusResult.error)
+              setIsProcessing(false)
+              return
+            } else if (statusResult.status === 'canceled') {
+              console.error('Prediction was canceled')
+              setIsProcessing(false)
+              return
+            }
+          }
+
+          // Continue polling if still processing
+          attempts++
+          if (attempts < maxAttempts) {
+            setTimeout(pollForResult, 5000) // Poll every 5 seconds
+          } else {
+            console.error('Polling timeout')
+            setIsProcessing(false)
+          }
+        } catch (error) {
+          console.error('Polling error:', error)
+          attempts++
+          if (attempts < maxAttempts) {
+            setTimeout(pollForResult, 5000)
+          } else {
+            setIsProcessing(false)
+          }
+        }
+      }
+
+      // Start polling
+      setTimeout(pollForResult, 2000) // Initial delay
+
+    } catch (error) {
+      console.error('Image edit error:', error)
+      setIsProcessing(false)
     }
-
-    const newVersion: ImageVersion = {
-      id: `generated-${Date.now()}`,
-      url: imageUrl,
-      style: style,
-      prompt: style ? undefined : prompt,
-    }
-
-    setImageVersions((prev) => [...prev, newVersion])
-    setCurrentPrompt("")
-    setSelectedStyle(null)
-    setIsProcessing(false)
   }
 
   const handlePromptSubmit = () => {
     if (imageVersions.length > 0 && currentPrompt.trim()) {
-      simulateImageEdit(currentPrompt)
+      editImageWithReplicate(currentPrompt)
     }
   }
 
@@ -162,7 +239,7 @@ export default function ImageEditor() {
       setSelectedStyle(styleValue)
       const style = presetStyles.find((s) => s.value === styleValue)
       if (style) {
-        simulateImageEdit("", styleValue)
+        editImageWithReplicate("", styleValue)
       }
     }
   }
@@ -199,7 +276,7 @@ export default function ImageEditor() {
     return <div>加载中...</div>
   }
 
-    return (
+  return (
     <>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Image Gallery Section */}
@@ -230,7 +307,7 @@ export default function ImageEditor() {
                   imageVersions.map((version, index) => (
                     <div key={version.id} className="flex-shrink-0 relative">
                       {/* Image Container with flexible height */}
-                      <div className="w-64 min-h-64 max-h-80 border-2 border-dashed border-gray-300 rounded-lg overflow-hidden relative group bg-gray-50 flex items-center justify-center p-2">
+                      <div className="w-64 h-64 border-2 border-dashed border-gray-300 rounded-lg overflow-hidden relative group bg-gray-50 flex items-center justify-center p-2">
                         <div
                           className="relative w-full h-full flex items-center justify-center cursor-pointer"
                           onClick={() => handleImageClick(version.url)}
@@ -295,8 +372,8 @@ export default function ImageEditor() {
                   <div className="flex-shrink-0 w-64 h-64 border-2 border-dashed border-purple-300 rounded-lg flex flex-col items-center justify-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mb-4"></div>
                     <div className="text-purple-600 text-center">
-                      <div className="font-medium">正在生成</div>
-                      <div className="text-sm mt-1">请稍候...</div>
+                      <div className="font-medium">AI处理中</div>
+                      <div className="text-sm mt-1">请耐心等待...</div>
                     </div>
                   </div>
                 )}
@@ -397,7 +474,7 @@ export default function ImageEditor() {
 
                   <TabsContent value="prompt" className="space-y-4">
                     <Textarea
-                      placeholder="例如：将背景改为夕阳西下的海滩，增加温暖的光线效果..."
+                      placeholder="例如：给她戴上眼镜，将背景改为夕阳西下的海滩，增加温暖的光线效果..."
                       value={currentPrompt}
                       onChange={(e) => setCurrentPrompt(e.target.value)}
                       className="min-h-24"
@@ -412,12 +489,12 @@ export default function ImageEditor() {
                       {isProcessing ? (
                         <>
                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          处理中...
+                          AI处理中...
                         </>
                       ) : (
                         <>
                           <Sparkles className="w-4 h-4 mr-2" />
-                          开始魔法转换
+                          开始AI编辑
                         </>
                       )}
                     </Button>
@@ -449,7 +526,7 @@ export default function ImageEditor() {
                 <X className="h-5 w-5" />
               </Button>
             </div>
-          </div>
+      </div>
 
           <div className="flex-1 flex items-center justify-center p-8 bg-gray-50">
             {selectedImage && (
@@ -461,9 +538,9 @@ export default function ImageEditor() {
                   height={900}
                   className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-lg"
                 />
-              </div>
+      </div>
             )}
-          </div>
+    </div>
         </DialogContent>
       </Dialog>
     </>

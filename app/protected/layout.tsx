@@ -9,8 +9,8 @@ export default function ProtectedLayout({
     <div className="min-h-screen bg-gray-50">
       <Navbar showAuthButton={false} />
       <main className="flex-1">
-        {children}
+          {children}
       </main>
-    </div>
+      </div>
   );
 }

@@ -16,7 +16,7 @@ export default function Page() {
       <Navbar showAuthButton={false} />
       <div className="flex min-h-[calc(100vh-4rem)] w-full items-start justify-center pt-16 p-6 md:p-10">
         <div className="w-full max-w-md">
-          <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6">
             <Card className="border border-gray-200 shadow-sm">
               <CardHeader className="text-center">
                 <div className="flex justify-center mb-4">
@@ -26,9 +26,9 @@ export default function Page() {
                 </div>
                 <CardTitle className="text-2xl text-purple-600">
                   注册成功！
-                </CardTitle>
+              </CardTitle>
                 <CardDescription>请检查您的邮箱以确认账户</CardDescription>
-              </CardHeader>
+            </CardHeader>
               <CardContent className="text-center">
                 <p className="text-sm text-muted-foreground mb-6">
                   您已成功注册账户。请检查您的邮箱并点击确认链接来激活您的账户，然后即可登录。
@@ -45,8 +45,8 @@ export default function Page() {
                     </Button>
                   </Link>
                 </div>
-              </CardContent>
-            </Card>
+            </CardContent>
+          </Card>
           </div>
         </div>
       </div>

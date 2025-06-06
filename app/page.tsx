@@ -58,7 +58,7 @@ export default function HomePage() {
               <Link href="/login">
                 <Button variant="outline" size="lg" className="text-lg px-8 py-3 rounded-xl border-2 border-purple-200 hover:border-purple-300 transition-all duration-300">
                   了解更多
-                </Button>
+            </Button>
               </Link>
             </div>
           </div>
@@ -80,7 +80,7 @@ export default function HomePage() {
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               运用最新的人工智能技术，为您提供专业级的图片风格转换服务
             </p>
-          </div>
+            </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {features.map((feature, index) => (
@@ -100,8 +100,8 @@ export default function HomePage() {
                 </CardContent>
               </Card>
             ))}
-          </div>
-        </div>
+                          </div>
+                        </div>
       </section>
 
       {/* Preview Section */}
@@ -114,18 +114,18 @@ export default function HomePage() {
             <p className="text-xl text-gray-600">
               一键转换，让您的照片呈现出不同的艺术风格
             </p>
-          </div>
-          
+                        </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
               <div className="bg-white p-6 rounded-xl shadow-sm">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">🎨 多种艺术风格</h3>
                 <p className="text-gray-600">支持吉卜力、水彩画、油画、赛博朋克等多种风格转换</p>
-              </div>
+                      </div>
               <div className="bg-white p-6 rounded-xl shadow-sm">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">⚡ 快速处理</h3>
                 <p className="text-gray-600">基于先进的AI算法，几秒钟内完成图片风格转换</p>
-              </div>
+                        </div>
               <div className="bg-white p-6 rounded-xl shadow-sm">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">🎯 精准效果</h3>
                 <p className="text-gray-600">保持原图主体特征，完美融合目标艺术风格</p>
@@ -144,13 +144,13 @@ export default function HomePage() {
                 <div className="absolute top-2 right-2 bg-purple-600 text-white text-xs px-2 py-1 rounded-full">
                   原图
                 </div>
-              </div>
-              
+          </div>
+
               {/* Decorative arrow */}
               <div className="hidden lg:block absolute -right-8 top-1/2 transform -translate-y-1/2">
                 <ArrowRight className="h-8 w-8 text-purple-400" />
-              </div>
-            </div>
+                          </div>
+                    </div>
           </div>
         </div>
       </section>
@@ -168,9 +168,9 @@ export default function HomePage() {
             <Button size="lg" variant="secondary" className="bg-white text-purple-600 hover:bg-gray-100 text-lg px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
               免费开始使用
               <Sparkles className="ml-2 h-5 w-5" />
-            </Button>
+              </Button>
           </Link>
-        </div>
+            </div>
       </section>
 
       {/* Footer */}
