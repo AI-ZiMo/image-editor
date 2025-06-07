@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Upload, Sparkles, AlertCircle, Download, X, Maximize2, Check } from "lucide-react"
+import { Upload, Sparkles, AlertCircle, Download, X, Maximize2, Check, CreditCard } from "lucide-react"
 import { toast } from "sonner"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Navbar } from "@/components/navbar"
@@ -49,6 +49,17 @@ const aspectRatios = [
   { name: "3:4", label: "3:4", value: "3:4", description: "竖版" },
 ]
 
+const quickPrompts = [
+  "让她手里捧着一束花",
+  "给她戴上眼镜",
+  "将背景改为夕阳西下的海滩",
+  "增加温暖的光线效果",
+  "让她穿上优雅的长裙",
+  "添加飘逸的长发",
+  "在背景中加入樱花飞舞",
+  "让她微笑着看向镜头"
+]
+
 
 
 export default function ImageEditor() {
@@ -61,12 +72,13 @@ export default function ImageEditor() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0)
-  const [generationMode, setGenerationMode] = useState<"style" | "prompt">("style")
+  const [generationMode, setGenerationMode] = useState<"style" | "prompt">("prompt")
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [imageToDelete, setImageToDelete] = useState<number | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadSuccess, setUploadSuccess] = useState(false)
   const [currentTip, setCurrentTip] = useState(0)
+  const [userCredits, setUserCredits] = useState<number>(10) // Mock data: start with 10 credits
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // 动态提示内容
@@ -87,6 +99,23 @@ export default function ImageEditor() {
       return () => clearInterval(interval)
     }
   }, [isProcessing, isUploading, tips.length])
+
+  // 使用模拟数据而不是API调用
+  // useEffect(() => {
+  //   const fetchUserCredits = async () => {
+  //     try {
+  //       const response = await fetch('/api/user-credits')
+  //       if (response.ok) {
+  //         const data = await response.json()
+  //         setUserCredits(data.credits)
+  //       }
+  //     } catch (error) {
+  //       console.error('Error fetching user credits:', error)
+  //     }
+  //   }
+  //   
+  //   fetchUserCredits()
+  // }, [])
 
   // 认证检查已移至服务器端layout.tsx，此处不再需要
 
@@ -263,6 +292,9 @@ export default function ImageEditor() {
                  setImageVersions((prev) => [...prev, newVersion])
                }
 
+               // 使用模拟数据：每次生成后减少1个积分
+               setUserCredits(prev => Math.max(0, prev - 1))
+
                setCurrentPrompt("")
                setSelectedStyle(null)
                setIsProcessing(false)
@@ -371,6 +403,10 @@ export default function ImageEditor() {
       setDeleteConfirmOpen(false)
       setImageToDelete(null)
     }
+  }
+
+  const handleQuickPromptClick = (prompt: string) => {
+    setCurrentPrompt(prev => prev ? `${prev}，${prompt}` : prompt)
   }
 
   const latestImage = imageVersions[imageVersions.length - 1]
@@ -612,9 +648,35 @@ export default function ImageEditor() {
           <div className="lg:col-span-6">
             <Card className="border border-gray-200 shadow-sm">
               <CardContent className="p-6">
-                <div className="flex items-center space-x-2 mb-4">
-                  <div className="bg-purple-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">3</div>
-                  <h3 className="text-lg font-semibold">第三步：生成命令</h3>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
+                  <div className="flex items-center space-x-2">
+                    <div className="bg-purple-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">3</div>
+                    <h3 className="text-lg font-semibold">第三步：生成命令</h3>
+                  </div>
+                  <div className="flex items-center space-x-3 flex-shrink-0">
+                    <div 
+                      className="flex items-center space-x-2 text-white px-3 py-2 rounded-lg shadow-lg min-w-0"
+                      style={{ 
+                        background: 'linear-gradient(to right, #7c3aed, #6d28d9)',
+                        color: 'white'
+                      }}
+                    >
+                      <Sparkles className="h-4 w-4 flex-shrink-0" style={{ color: 'white' }} />
+                      <span className="font-bold text-lg whitespace-nowrap" style={{ color: 'white' }}>{userCredits}</span>
+                      <span className="text-sm opacity-90 whitespace-nowrap" style={{ color: 'white' }}>积分</span>
+                    </div>
+                    <Button
+                      onClick={() => router.push('/pricing')}
+                      className="text-white px-3 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center space-x-2 whitespace-nowrap"
+                      style={{ 
+                        background: 'linear-gradient(to right, #f59e0b, #d97706)',
+                        color: 'white'
+                      }}
+                    >
+                      <CreditCard className="h-4 w-4 flex-shrink-0" style={{ color: 'white' }} />
+                      <span className="font-medium" style={{ color: 'white' }}>充值</span>
+                    </Button>
+                  </div>
                 </div>
                 <div className="text-sm text-gray-500 mb-4">
                   点击下方选择相应的风格和提示词，然后点击编辑按钮开始编辑
@@ -688,6 +750,23 @@ export default function ImageEditor() {
                       className="min-h-24"
                       disabled={isProcessing || isUploading || imageVersions.length === 0}
                     />
+
+                    {/* 快速提示词按钮 */}
+                    <div className="space-y-2">
+                      <div className="text-xs text-gray-500 font-medium">快速填入：</div>
+                      <div className="flex flex-wrap gap-2">
+                        {quickPrompts.map((prompt, index) => (
+                          <button
+                            key={index}
+                            onClick={() => handleQuickPromptClick(prompt)}
+                            disabled={isProcessing || isUploading || imageVersions.length === 0}
+                            className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-purple-100 text-gray-700 hover:text-purple-700 rounded-md border border-gray-200 hover:border-purple-300 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {prompt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
 
                     <div className="space-y-2">
                       <Button
