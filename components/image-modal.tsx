@@ -169,13 +169,26 @@ export function ImageModal({
           {imageUrl && (
             <div className="flex flex-col items-center max-w-full h-full justify-center">
               <div className="relative bg-gray-200 p-3 rounded-lg shadow-2xl max-h-[calc(100%-100px)]">
-                <Image
-                  src={imageUrl}
-                  alt="预览图片"
-                  width={1200}
-                  height={900}
-                  className="max-w-full max-h-[75vh] object-contain rounded-md"
-                />
+                {imageUrl.includes('supabase.co') ? (
+                  // 对于 Supabase 图片使用原生 img 标签避免 Next.js 优化超时
+                  <img
+                    src={imageUrl}
+                    alt="预览图片"
+                    className="max-w-full max-h-[75vh] object-contain rounded-md"
+                    onError={(e) => {
+                      console.error('Supabase image load error in modal:', e)
+                    }}
+                  />
+                ) : (
+                  // 对于其他图片继续使用 Next.js Image 组件
+                  <Image
+                    src={imageUrl}
+                    alt="预览图片"
+                    width={1200}
+                    height={900}
+                    className="max-w-full max-h-[75vh] object-contain rounded-md"
+                  />
+                )}
               </div>
               
               {/* 图片计数器 */}

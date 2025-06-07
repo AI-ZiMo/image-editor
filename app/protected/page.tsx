@@ -414,13 +414,27 @@ export default function ImageEditor() {
                           className="relative w-full h-full flex items-center justify-center cursor-pointer"
                           onClick={() => handleImageClick(version.url)}
                         >
-                          <Image
-                            src={version.url || "/placeholder.svg"}
-                            alt={version.isOriginal ? "原始图片" : `生成图片 ${index}`}
-                            width={240}
-                            height={240}
-                            className="max-w-full max-h-full object-contain transition-transform group-hover:scale-105"
-                          />
+                          {version.url?.includes('supabase.co') ? (
+                            // 对于 Supabase 图片使用原生 img 标签避免 Next.js 优化超时
+                            <img
+                              src={version.url}
+                              alt={version.isOriginal ? "原始图片" : `生成图片 ${index}`}
+                              className="max-w-full max-h-full object-contain transition-transform group-hover:scale-105"
+                              onError={(e) => {
+                                console.error('Supabase image load error:', e)
+                                // 可以在这里设置一个默认图片
+                              }}
+                            />
+                          ) : (
+                            // 对于其他图片继续使用 Next.js Image 组件
+                            <Image
+                              src={version.url || "/placeholder.svg"}
+                              alt={version.isOriginal ? "原始图片" : `生成图片 ${index}`}
+                              width={240}
+                              height={240}
+                              className="max-w-full max-h-full object-contain transition-transform group-hover:scale-105"
+                            />
+                          )}
                           
                           {/* 上传状态覆盖层 */}
                           {version.isOriginal && isUploading && (
