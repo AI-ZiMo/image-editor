@@ -61,8 +61,7 @@ export function SignUpForm({
       // 短暂延迟后跳转
       setTimeout(() => {
         router.push("/sign-up-success");
-        // 跳转完成后再结束加载状态
-        setIsLoading(false);
+        // 不在这里结束加载状态，让页面跳转时保持加载状态
       }, 1000);
       
     } catch (error: unknown) {

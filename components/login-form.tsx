@@ -50,8 +50,7 @@ export function LoginForm({
       setTimeout(() => {
         router.push("/protected");
         router.refresh(); // 刷新页面状态
-        // 跳转完成后再结束加载状态
-        setIsLoading(false);
+        // 不在这里结束加载状态，让页面跳转时保持加载状态
       }, 1000);
       
     } catch (error: unknown) {
