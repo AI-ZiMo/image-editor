@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export function SignUpForm({
   className,
@@ -34,7 +35,9 @@ export function SignUpForm({
     setError(null);
 
     if (password !== repeatPassword) {
-      setError("密码不匹配");
+      const errorMsg = "密码不匹配";
+      setError(errorMsg);
+      toast.error(errorMsg);
       setIsLoading(false);
       return;
     }
@@ -47,10 +50,23 @@ export function SignUpForm({
           emailRedirectTo: `${window.location.origin}/protected`,
         },
       });
+      
       if (error) throw error;
-      router.push("/sign-up-success");
+      
+      // 显示成功提示
+      toast.success('注册成功！请检查您的邮箱以验证账户', {
+        duration: 3000,
+      });
+      
+      // 短暂延迟后跳转
+      setTimeout(() => {
+        router.push("/sign-up-success");
+      }, 1000);
+      
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred");
+      const errorMessage = error instanceof Error ? error.message : "注册失败，请重试";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

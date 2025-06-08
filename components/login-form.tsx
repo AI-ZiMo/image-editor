@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export function LoginForm({
   className,
@@ -33,15 +34,28 @@ export function LoginForm({
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error, data } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
+      
       if (error) throw error;
-      // Update this route to redirect to an authenticated route. The user already has an active session.
-      router.push("/protected");
+      
+      // 显示成功提示
+      toast.success('登录成功！正在跳转...', {
+        duration: 2000,
+      });
+      
+      // 短暂延迟后跳转，让用户看到成功提示
+      setTimeout(() => {
+        router.push("/protected");
+        router.refresh(); // 刷新页面状态
+      }, 1000);
+      
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred");
+      const errorMessage = error instanceof Error ? error.message : "登录失败，请重试";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
