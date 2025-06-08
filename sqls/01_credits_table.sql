@@ -24,6 +24,10 @@ CREATE POLICY "Users can view own credits" ON ai_images_creator_credits
 CREATE POLICY "Service role can manage credits" ON ai_images_creator_credits
   FOR ALL USING (auth.role() = 'service_role');
 
+-- 授予必要权限
+GRANT ALL ON ai_images_creator_credits TO authenticated;
+GRANT ALL ON ai_images_creator_credits TO service_role;
+
 -- 更新 updated_at 的触发器函数
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
@@ -37,16 +41,22 @@ CREATE TRIGGER update_credits_updated_at
   BEFORE UPDATE ON ai_images_creator_credits
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- 用户注册时自动给2个点数的触发器
+-- 用户注册时自动给2个点数的触发器 (使用显式架构引用修复事务错误)
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO ai_images_creator_credits (user_id, credits)
+  INSERT INTO public.ai_images_creator_credits (user_id, credits)
   VALUES (NEW.id, 2);
   RETURN NEW;
 END;
-$$ language 'plpgsql';
+$$ language 'plpgsql' SECURITY DEFINER;
 
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+
+-- 为任何已存在但没有积分记录的用户创建积分记录
+INSERT INTO public.ai_images_creator_credits (user_id, credits)
+SELECT id, 2 
+FROM auth.users 
+WHERE id NOT IN (SELECT user_id FROM public.ai_images_creator_credits);

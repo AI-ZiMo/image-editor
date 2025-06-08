@@ -78,7 +78,8 @@ export default function ImageEditor() {
   const [isUploading, setIsUploading] = useState(false)
   const [uploadSuccess, setUploadSuccess] = useState(false)
   const [currentTip, setCurrentTip] = useState(0)
-  const [userCredits, setUserCredits] = useState<number>(10) // Mock data: start with 10 credits
+  const [userCredits, setUserCredits] = useState<number>(0)
+  const [currentProjectId, setCurrentProjectId] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // 动态提示内容
@@ -100,22 +101,22 @@ export default function ImageEditor() {
     }
   }, [isProcessing, isUploading, tips.length])
 
-  // 使用模拟数据而不是API调用
-  // useEffect(() => {
-  //   const fetchUserCredits = async () => {
-  //     try {
-  //       const response = await fetch('/api/user-credits')
-  //       if (response.ok) {
-  //         const data = await response.json()
-  //         setUserCredits(data.credits)
-  //       }
-  //     } catch (error) {
-  //       console.error('Error fetching user credits:', error)
-  //     }
-  //   }
-  //   
-  //   fetchUserCredits()
-  // }, [])
+  // 获取用户积分
+  useEffect(() => {
+    const fetchUserCredits = async () => {
+      try {
+        const response = await fetch('/api/user-credits')
+        if (response.ok) {
+          const data = await response.json()
+          setUserCredits(data.credits)
+        }
+      } catch (error) {
+        console.error('Error fetching user credits:', error)
+      }
+    }
+    
+    fetchUserCredits()
+  }, [])
 
   // 认证检查已移至服务器端layout.tsx，此处不再需要
 
@@ -150,6 +151,37 @@ export default function ImageEditor() {
         const uploadResult = await uploadResponse.json()
         
         if (uploadResult.success) {
+          // Save original image to history and create new project
+          try {
+            // Get current user
+            const supabase = createClient()
+            const { data: { user } } = await supabase.auth.getUser()
+            
+            if (!user) {
+              throw new Error('User not authenticated')
+            }
+            
+            const historyResponse = await fetch('/api/save-image-history', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                userId: user.id,
+                imageUrl: uploadResult.fileUrl,
+                storagePath: uploadResult.filePath,
+                isOriginal: true
+              }),
+            })
+            
+            const historyResult = await historyResponse.json()
+            if (historyResult.success) {
+              setCurrentProjectId(historyResult.projectId)
+            }
+          } catch (error) {
+            console.error('Error saving to history:', error)
+          }
+          
           // Update the original image with Supabase URLs
           setImageVersions(prev => prev.map(img => 
             img.isOriginal 
@@ -292,8 +324,82 @@ export default function ImageEditor() {
                  setImageVersions((prev) => [...prev, newVersion])
                }
 
-               // 使用模拟数据：每次生成后减少1个积分
-               setUserCredits(prev => Math.max(0, prev - 1))
+               // Save generated image to history - moved to after storeResult is available
+               let finalImageUrl = statusResult.output
+               let finalStoragePath = null
+               let finalStyleName = style
+               
+               try {
+                 const storeResponse = await fetch('/api/store-generated-image', {
+                   method: 'POST',
+                   headers: {
+                     'Content-Type': 'application/json',
+                   },
+                   body: JSON.stringify({
+                     imageUrl: statusResult.output
+                   }),
+                 })
+
+                 const currentStoreResult = await storeResponse.json()
+                 if (currentStoreResult.success) {
+                   finalImageUrl = currentStoreResult.storedUrl
+                   finalStoragePath = currentStoreResult.filePath
+                 }
+               } catch (error) {
+                 console.error('Error storing image for history:', error)
+               }
+               
+               const currentStyleObj = presetStyles.find(s => s.value === style)
+               if (currentStyleObj) {
+                 finalStyleName = currentStyleObj.name
+               }
+               
+               if (currentProjectId) {
+                 try {
+                   // Get current user
+                   const supabase = createClient()
+                   const { data: { user } } = await supabase.auth.getUser()
+                   
+                   if (!user) {
+                     throw new Error('User not authenticated')
+                   }
+                   
+                   const historyResponse = await fetch('/api/save-image-history', {
+                     method: 'POST',
+                     headers: {
+                       'Content-Type': 'application/json',
+                     },
+                     body: JSON.stringify({
+                       userId: user.id,
+                       projectId: currentProjectId,
+                       parentId: imageVersions[imageVersions.length - 1]?.id,
+                       imageUrl: finalImageUrl,
+                       storagePath: finalStoragePath || null,
+                       prompt: style ? null : (prompt || null),
+                       style: finalStyleName || null,
+                       aspectRatio: selectedAspectRatio === "match" ? "match_input_image" : selectedAspectRatio
+                     }),
+                   })
+                   
+                   const historyResult = await historyResponse.json()
+                   if (!historyResult.success) {
+                     console.error('Failed to save history:', historyResult.error)
+                   }
+                 } catch (error) {
+                   console.error('Error saving to history:', error)
+                 }
+               }
+
+               // Refresh user credits after successful generation
+               try {
+                 const response = await fetch('/api/user-credits')
+                 if (response.ok) {
+                   const data = await response.json()
+                   setUserCredits(data.credits)
+                 }
+               } catch (error) {
+                 console.error('Error refreshing user credits:', error)
+               }
 
                setCurrentPrompt("")
                setSelectedStyle(null)
@@ -301,10 +407,40 @@ export default function ImageEditor() {
                return
             } else if (statusResult.status === 'failed') {
               console.error('Prediction failed:', statusResult.error)
+              
+              // Refund credits on failure
+              try {
+                const refundResponse = await fetch('/api/user-credits', { method: 'POST' })
+                if (refundResponse.ok) {
+                  const response = await fetch('/api/user-credits')
+                  if (response.ok) {
+                    const data = await response.json()
+                    setUserCredits(data.credits)
+                  }
+                }
+              } catch (error) {
+                console.error('Error refunding credits:', error)
+              }
+              
               setIsProcessing(false)
               return
             } else if (statusResult.status === 'canceled') {
               console.error('Prediction was canceled')
+              
+              // Refund credits on cancellation
+              try {
+                const refundResponse = await fetch('/api/user-credits', { method: 'POST' })
+                if (refundResponse.ok) {
+                  const response = await fetch('/api/user-credits')
+                  if (response.ok) {
+                    const data = await response.json()
+                    setUserCredits(data.credits)
+                  }
+                }
+              } catch (error) {
+                console.error('Error refunding credits:', error)
+              }
+              
               setIsProcessing(false)
               return
             }
@@ -316,6 +452,21 @@ export default function ImageEditor() {
             setTimeout(pollForResult, 5000) // Poll every 5 seconds
           } else {
             console.error('Polling timeout')
+            
+            // Refund credits on timeout
+            try {
+              const refundResponse = await fetch('/api/user-credits', { method: 'POST' })
+              if (refundResponse.ok) {
+                const response = await fetch('/api/user-credits')
+                if (response.ok) {
+                  const data = await response.json()
+                  setUserCredits(data.credits)
+                }
+              }
+            } catch (error) {
+              console.error('Error refunding credits on timeout:', error)
+            }
+            
             setIsProcessing(false)
           }
         } catch (error) {

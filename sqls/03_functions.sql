@@ -13,17 +13,15 @@ RETURNS UUID AS $$
 DECLARE
   v_project_id UUID;
 BEGIN
-  -- 插入原图作为新项目
-  INSERT INTO ai_images_creator_history (
-    user_id, project_id, image_url, storage_path, is_original, project_name
-  ) VALUES (
-    p_user_id, gen_random_uuid(), p_image_url, p_storage_path, true, p_project_name
-  ) RETURNING id INTO v_project_id;
+  -- 生成新的项目ID
+  v_project_id := gen_random_uuid();
   
-  -- 更新project_id为自己的id（原图的特殊规则）
-  UPDATE ai_images_creator_history 
-  SET project_id = v_project_id 
-  WHERE id = v_project_id;
+  -- 插入原图作为新项目，project_id设置为自己的id以满足约束
+  INSERT INTO ai_images_creator_history (
+    id, user_id, project_id, image_url, storage_path, is_original, project_name
+  ) VALUES (
+    v_project_id, p_user_id, v_project_id, p_image_url, p_storage_path, true, p_project_name
+  );
   
   RETURN v_project_id;
 END;
@@ -208,9 +206,9 @@ CREATE OR REPLACE FUNCTION add_generated_image(
   p_project_id UUID,
   p_parent_id UUID,
   p_image_url TEXT,
-  p_storage_path TEXT,
-  p_prompt TEXT,
-  p_style TEXT,
+  p_storage_path TEXT DEFAULT NULL,
+  p_prompt TEXT DEFAULT NULL,
+  p_style TEXT DEFAULT NULL,
   p_aspect_ratio TEXT DEFAULT 'match_input_image'
 ) RETURNS UUID AS $$
 DECLARE
