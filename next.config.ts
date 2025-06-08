@@ -33,6 +33,12 @@ const nextConfig: NextConfig = {
         port: '3000',
         pathname: '/api/image-proxy',
       },
+      {
+        protocol: 'https',
+        hostname: 'aibuilder.oss-cn-hangzhou.aliyuncs.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',

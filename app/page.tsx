@@ -1,11 +1,80 @@
+"use client"
+
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Navbar } from "@/components/navbar"
-import { Sparkles, Wand2, Image as ImageIcon, Palette, ArrowRight } from "lucide-react"
+import { Sparkles, Wand2, Image as ImageIcon, Palette, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { useState, useEffect } from "react"
 
 export default function HomePage() {
+
+  // 图片对比数据
+  const imageComparisons = [
+    {
+      before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images1749188256096-om0mfropi8.jpg",
+      after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/imagesgenerated-1749188366245-omfod8nkvyl.png",
+      prompt: "给她带一顶 鲜花编织而成的 帽子"
+    },
+    {
+      before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/imagesDSC_0240.jpg",
+      after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/imagesgenerated-1749225316442-lhn1244awbs.png",
+      prompt: "给她带一顶 鲜花编织而成的 圆环帽子"
+    },
+    {
+      before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E5%8E%9F%E5%9B%BE%20(1).jpg",
+      after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E7%94%9F%E6%88%90%E5%9B%BE%E7%89%871.jpg",
+      prompt: "给她带上眼镜"
+    },
+    {
+      before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E5%8E%9F%E5%9B%BE%20(2).jpg",
+      after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E7%94%9F%E6%88%90%E5%9B%BE%E7%89%871%20(1).jpg",
+      prompt: "在背景中加入 樱花飞舞"
+    }
+  ]
+
+  // 风格对比数据
+  const styleComparisons = [
+    {
+      before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/imagesDSC_0476.jpg",
+      after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/imagesWechatIMG766.jpg",
+      style: "水彩画风格",
+      tag: "艺术"
+    },
+    {
+      before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E7%94%9F%E6%88%90%E5%9B%BE%E7%89%871%20(1).jpg",
+      after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E7%94%9F%E6%88%90%E5%9B%BE%E7%89%872.jpg",
+      style: "日式动漫风格",
+      tag: "动漫"
+    },
+    {
+      before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E5%8E%9F%E5%9B%BE%20(3).jpg",
+      after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E7%94%9F%E6%88%90%E5%9B%BE%E7%89%871%20(2).jpg",
+      style: "水彩画风格",
+      tag: "艺术"
+    }
+  ]
+
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
+
+  // 自动轮播
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % imageComparisons.length)
+    }, 4000) // 每4秒切换一次
+
+    return () => clearInterval(interval)
+  }, [imageComparisons.length])
+
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % imageComparisons.length)
+  }
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + imageComparisons.length) % imageComparisons.length)
+  }
+
   const features = [
     {
       icon: <Wand2 className="h-8 w-8 text-purple-600" />,
@@ -24,31 +93,57 @@ export default function HomePage() {
     }
   ]
 
+
+
+
   return (
     <div className="min-h-screen bg-gray-50">
+      <style jsx global>{`
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        @keyframes scroll-horizontal {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        .animate-scroll-horizontal {
+          animation: scroll-horizontal 30s linear infinite;
+        }
+        .animate-scroll-horizontal:hover {
+          animation-play-state: paused;
+        }
+      `}</style>
       <Navbar />
       
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-purple-50 to-indigo-100 pt-16 pb-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <div className="flex justify-center mb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Left Content */}
+            <div className="text-center lg:text-left">
+              <div className="flex justify-center lg:justify-start mb-6">
               <div className="bg-purple-600 text-white p-4 rounded-2xl shadow-lg">
                 <Sparkles className="h-12 w-12" />
               </div>
             </div>
             
-            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-              <span className="bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                魔图工坊
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
+                <span className="text-purple-600">
+                  替代PS的AI图片编辑工具
               </span>
             </h1>
             
-            <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
-              AI驱动的图片风格转换平台，让您的照片瞬间变身艺术作品
+              <p className="text-xl md:text-2xl text-gray-600 mb-8 leading-relaxed">
+                采用最先进的图片大模型，保持图片一致性，拥有顶级的AI图片编辑体验
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+
+              
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start items-center">
               <Link href="/protected">
                 <Button size="lg" className="bg-purple-600 hover:bg-purple-700 text-lg px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
                   立即开始创作
@@ -60,6 +155,91 @@ export default function HomePage() {
                   了解更多
             </Button>
               </Link>
+              </div>
+            </div>
+
+            {/* Right Content - Before/After Comparison Carousel */}
+            <div className="flex flex-col items-center justify-center">
+              <div className="relative">
+                {/* Navigation Buttons */}
+                <button
+                  onClick={prevImage}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-12 z-10 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-110"
+                >
+                  <ChevronLeft className="h-5 w-5 text-gray-600" />
+                </button>
+                
+                <button
+                  onClick={nextImage}
+                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-12 z-10 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-110"
+                >
+                  <ChevronRight className="h-5 w-5 text-gray-600" />
+                </button>
+
+                <div className="flex items-center justify-center space-x-4 mb-6">
+                  {/* Before Image */}
+                  <div className="relative">
+                    <div className="bg-white p-3 rounded-2xl shadow-lg">
+                      <Image
+                        src={imageComparisons[currentImageIndex].before}
+                        alt="转换前图片"
+                        width={180}
+                        height={320}
+                        className="w-44 h-80 object-cover rounded-lg transition-all duration-500"
+                      />
+                      <div className="absolute top-5 left-5 bg-gray-800 text-white text-xs px-2 py-1 rounded-full">
+                        转换前
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Arrow */}
+                  <div className="flex justify-center">
+                    <div className="bg-purple-600 text-white p-2 rounded-full">
+                      <ArrowRight className="h-5 w-5" />
+                    </div>
+                  </div>
+
+                  {/* After Image */}
+                  <div className="relative">
+                    <div className="bg-white p-3 rounded-2xl shadow-lg">
+                      <Image
+                        src={imageComparisons[currentImageIndex].after}
+                        alt="转换后图片"
+                        width={180}
+                        height={320}
+                        className="w-44 h-80 object-cover rounded-lg transition-all duration-500"
+                      />
+                      <div className="absolute top-5 left-5 bg-purple-600 text-white text-xs px-2 py-1 rounded-full">
+                        AI编辑后
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Indicators */}
+                <div className="flex justify-center space-x-2 mb-4">
+                  {imageComparisons.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentImageIndex(index)}
+                      className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                        index === currentImageIndex 
+                          ? 'bg-purple-600 w-8' 
+                          : 'bg-gray-300 hover:bg-gray-400'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+              
+              {/* Prompt Example */}
+              <div className="bg-purple-100 border border-purple-300 rounded-lg p-4">
+                <div className="flex items-center justify-center space-x-2 text-purple-700">
+                  <Wand2 className="h-5 w-5" />
+                  <span className="font-semibold">提示词示例："{imageComparisons[currentImageIndex].prompt}"</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -67,7 +247,185 @@ export default function HomePage() {
         {/* Background decorations */}
         <div className="absolute top-20 left-10 w-20 h-20 bg-purple-200 rounded-full opacity-50 animate-pulse"></div>
         <div className="absolute bottom-20 right-10 w-32 h-32 bg-indigo-200 rounded-full opacity-50 animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 right-1/4 w-16 h-16 bg-pink-200 rounded-full opacity-50 animate-pulse delay-500"></div>
+      </section>
+
+      {/* AI Effects Showcase */}
+      <section className="py-16 bg-white overflow-hidden relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              海量AI编辑效果
+            </h2>
+            <p className="text-xl text-gray-600">
+              一键应用，让您的图片呈现无限可能
+            </p>
+          </div>
+          
+                    {/* Full-Screen Image Gallery */}
+          <div className="relative" style={{ marginLeft: 'calc(-50vw + 50%)', marginRight: 'calc(-50vw + 50%)', width: '100vw' }}>
+            {/* Animated container */}
+            <div className="animate-scroll-horizontal" style={{ position: 'relative' }}>
+              {/* Display all real data in multiple rows */}
+              <div className="space-y-4" style={{ width: '200%' }}>
+                {(() => {
+                  // Combine all images into one array
+                  const allImages = [
+                    ...imageComparisons.map((comparison, index) => ({
+                      type: 'prompt',
+                      data: comparison,
+                      index
+                    })),
+                    ...styleComparisons.map((styleComparison, index) => ({
+                      type: 'style',
+                      data: styleComparison,
+                      index
+                    }))
+                  ]
+                  
+                  // Split into rows of 6 images each
+                  const itemsPerRow = 6
+                  const rows = []
+                  for (let i = 0; i < allImages.length; i += itemsPerRow) {
+                    rows.push(allImages.slice(i, i + itemsPerRow))
+                  }
+                  
+                  return rows.map((row, rowIndex) => (
+                    <div 
+                      key={rowIndex}
+                      className={`flex gap-2 ${rowIndex % 2 === 1 ? 'ml-40' : ''}`}
+                    >
+                      {row.map((item, colIndex) => {
+                                                 if (item.type === 'prompt') {
+                           const comparison = item.data as typeof imageComparisons[0]
+                          return (
+                            <div
+                              key={`prompt-${item.index}`}
+                              className="flex-shrink-0 bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-500 hover:scale-105 hover:shadow-xl cursor-pointer hover:z-10 relative border-2 border-purple-200"
+                              style={{ 
+                                width: '400px',
+                                height: '320px'
+                              }}
+                            >
+                              <div className="p-4 h-full flex flex-col">
+                                {/* 前后对比图片 */}
+                                <div className="flex gap-3 flex-1">
+                                  <div className="flex-1 relative">
+                                    <Image
+                                      src={comparison.before}
+                                      alt="编辑前"
+                                      width={180}
+                                      height={200}
+                                      className="w-full h-full object-cover rounded-lg"
+                                    />
+                                    <div className="absolute top-2 left-2 bg-gray-800 text-white text-xs px-2 py-1 rounded-full">
+                                      编辑前
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center">
+                                    <div className="bg-purple-600 text-white p-1 rounded-full">
+                                      <ArrowRight className="h-3 w-3" />
+                                    </div>
+                                  </div>
+                                  <div className="flex-1 relative">
+                                    <Image
+                                      src={comparison.after}
+                                      alt="编辑后"
+                                      width={180}
+                                      height={200}
+                                      className="w-full h-full object-cover rounded-lg"
+                                    />
+                                    <div className="absolute top-2 left-2 bg-purple-600 text-white text-xs px-2 py-1 rounded-full">
+                                      AI编辑后
+                                    </div>
+                                  </div>
+                                </div>
+                                {/* 提示词 */}
+                                <div className="mt-3 bg-purple-50 rounded-lg p-2">
+                                  <p className="text-xs text-purple-700 font-medium text-center">
+                                    提示词编辑："{comparison.prompt}"
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )
+                                                 } else {
+                           const styleComparison = item.data as typeof styleComparisons[0]
+                          return (
+                            <div
+                              key={`style-${item.index}`}
+                              className="flex-shrink-0 bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-500 hover:scale-105 hover:shadow-xl cursor-pointer hover:z-10 relative border-2 border-blue-200"
+                              style={{ 
+                                width: '380px',
+                                height: '320px'
+                              }}
+                            >
+                              <div className="p-4 h-full flex flex-col">
+                                {/* 风格对比图片 */}
+                                <div className="flex gap-3 flex-1">
+                                  <div className="flex-1 relative">
+                                    <Image
+                                      src={styleComparison.before}
+                                      alt="原图"
+                                      width={170}
+                                      height={200}
+                                      className="w-full h-full object-cover rounded-lg"
+                                    />
+                                    <div className="absolute top-2 left-2 bg-gray-800 text-white text-xs px-2 py-1 rounded-full">
+                                      原图
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center">
+                                    <div className="bg-blue-600 text-white p-1 rounded-full">
+                                      <ArrowRight className="h-3 w-3" />
+                                    </div>
+                                  </div>
+                                  <div className="flex-1 relative">
+                                    <Image
+                                      src={styleComparison.after}
+                                      alt="风格转换后"
+                                      width={170}
+                                      height={200}
+                                      className="w-full h-full object-cover rounded-lg"
+                                    />
+                                    <div className="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
+                                      {styleComparison.tag}
+                                    </div>
+                                  </div>
+                                </div>
+                                {/* 风格标题 */}
+                                <div className="mt-3 bg-blue-50 rounded-lg p-2">
+                                  <p className="text-sm text-blue-700 font-semibold text-center">
+                                    {styleComparison.style}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        }
+                      })}
+                    </div>
+                  ))
+                })()}
+              </div>
+            </div>
+            
+            {/* Screen-edge gradients - funnel effect with 100% invisible at edges */}
+            <div 
+              className="fixed left-0 top-0 h-screen pointer-events-none z-20" 
+              style={{ 
+                width: '300px',
+                background: 'linear-gradient(to right, white 0%, white 20%, rgba(255,255,255,0.95) 35%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0.5) 70%, rgba(255,255,255,0.2) 85%, transparent 100%)'
+              }}
+            ></div>
+            <div 
+              className="fixed right-0 top-0 h-screen pointer-events-none z-20" 
+              style={{ 
+                width: '300px',
+                background: 'linear-gradient(to left, white 0%, white 20%, rgba(255,255,255,0.95) 35%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0.5) 70%, rgba(255,255,255,0.2) 85%, transparent 100%)'
+              }}
+            ></div>
+          </div>
+        </div>
       </section>
 
       {/* Features Section */}
@@ -104,64 +462,51 @@ export default function HomePage() {
                         </div>
       </section>
 
-      {/* Preview Section */}
+      {/* Features Section */}
       <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              看看AI的神奇魔法
+              强大的AI图片编辑能力
             </h2>
             <p className="text-xl text-gray-600">
-              一键转换，让您的照片呈现出不同的艺术风格
+              运用最新的人工智能技术，为您提供专业级的图片编辑服务
             </p>
                         </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6">
-              <div className="bg-white p-6 rounded-xl shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">🎨 多种艺术风格</h3>
-                <p className="text-gray-600">支持吉卜力、水彩画、油画、赛博朋克等多种风格转换</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-white p-6 rounded-xl shadow-sm text-center">
+              <div className="bg-purple-100 p-3 rounded-xl w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                <Wand2 className="h-8 w-8 text-purple-600" />
                       </div>
-              <div className="bg-white p-6 rounded-xl shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">⚡ 快速处理</h3>
-                <p className="text-gray-600">基于先进的AI算法，几秒钟内完成图片风格转换</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">文字提示编辑</h3>
+              <p className="text-gray-600">输入简单文字描述，AI就能为图片添加您想要的元素</p>
                         </div>
-              <div className="bg-white p-6 rounded-xl shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">🎯 精准效果</h3>
-                <p className="text-gray-600">保持原图主体特征，完美融合目标艺术风格</p>
+            <div className="bg-white p-6 rounded-xl shadow-sm text-center">
+              <div className="bg-green-100 p-3 rounded-xl w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                <Sparkles className="h-8 w-8 text-green-600" />
               </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">智能融合</h3>
+              <p className="text-gray-600">AI智能分析图片内容，完美融合新元素，效果自然逼真</p>
             </div>
-            
-            <div className="relative">
-              <div className="bg-white p-4 rounded-2xl shadow-lg">
-                <Image
-                  src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop"
-                  alt="示例图片"
-                  width={600}
-                  height={400}
-                  className="w-full h-64 object-cover rounded-lg"
-                />
-                <div className="absolute top-2 right-2 bg-purple-600 text-white text-xs px-2 py-1 rounded-full">
-                  原图
+            <div className="bg-white p-6 rounded-xl shadow-sm text-center">
+              <div className="bg-blue-100 p-3 rounded-xl w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                <ImageIcon className="h-8 w-8 text-blue-600" />
                 </div>
-          </div>
-
-              {/* Decorative arrow */}
-              <div className="hidden lg:block absolute -right-8 top-1/2 transform -translate-y-1/2">
-                <ArrowRight className="h-8 w-8 text-purple-400" />
-                          </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">高质量输出</h3>
+              <p className="text-gray-600">保持原图质量，生成高分辨率的编辑结果</p>
                     </div>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-purple-600 to-indigo-600 text-white">
+      <section className="py-20 bg-gradient-to-r from-purple-600 to-indigo-600">
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6 text-white">
             准备好体验AI的魔法了吗？
           </h2>
-          <p className="text-xl mb-8 opacity-90">
+          <p className="text-xl mb-8 text-white opacity-90">
             立即开始，让您的照片焕发全新的艺术光彩
           </p>
           <Link href="/protected">
