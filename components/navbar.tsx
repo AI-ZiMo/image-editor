@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Sparkles, User, LogOut, Clock } from "lucide-react"
+import { Sparkles, User, LogOut, Clock, CreditCard } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -79,6 +79,13 @@ export function Navbar({ showAuthButton = true, user }: NavbarProps) {
                   <span className="relative z-10">历史记录</span>
                   <div className="absolute inset-x-0 bottom-0 h-0.5 bg-purple-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-in-out"></div>
                 </Link>
+                <Link 
+                  href="/protected/orders" 
+                  className="text-gray-600 hover:text-purple-600 relative transition-all duration-300 ease-in-out group"
+                >
+                  <span className="relative z-10">订单记录</span>
+                  <div className="absolute inset-x-0 bottom-0 h-0.5 bg-purple-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-in-out"></div>
+                </Link>
               </>
                             )}
             <Link 
@@ -133,6 +140,10 @@ export function Navbar({ showAuthButton = true, user }: NavbarProps) {
                   <DropdownMenuItem onClick={() => router.push('/protected/history')}>
                     <Clock className="mr-2 h-4 w-4" />
                     历史记录
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/protected/orders')}>
+                    <CreditCard className="mr-2 h-4 w-4" />
+                    订单记录
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => router.push('/pricing')}>
                     <Sparkles className="mr-2 h-4 w-4" />
