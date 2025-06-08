@@ -80,6 +80,7 @@ export default function ImageEditor() {
   const [currentTip, setCurrentTip] = useState(0)
   const [userCredits, setUserCredits] = useState<number>(0)
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null)
+  const [insufficientCreditsOpen, setInsufficientCreditsOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // 动态提示内容
@@ -284,6 +285,15 @@ export default function ImageEditor() {
 
       if (!editResult.success) {
         console.error('Edit failed:', editResult.error)
+        
+        // 检查是否是积分不足错误 (作为后端二重保障)
+        if (editResponse.status === 402) {
+          console.log('后端积分检查：积分不足')
+          setInsufficientCreditsOpen(true)
+        } else {
+          toast.error('图像编辑失败，请重试')
+        }
+        
         setIsProcessing(false)
         return
       }
@@ -519,9 +529,18 @@ export default function ImageEditor() {
   }
 
   const handlePromptSubmit = () => {
-    if (imageVersions.length > 0 && currentPrompt.trim()) {
-      editImageWithReplicate(currentPrompt)
+    if (imageVersions.length === 0 || !currentPrompt.trim()) {
+      return
     }
+    
+    // 先检查积分是否充足
+    if (userCredits < 1) {
+      console.log('积分不足，显示充值对话框')
+      setInsufficientCreditsOpen(true)
+      return
+    }
+    
+    editImageWithReplicate(currentPrompt)
   }
 
   const handleStyleClick = (styleValue: string) => {
@@ -531,9 +550,18 @@ export default function ImageEditor() {
   }
 
   const handleStartEditing = () => {
-    if (imageVersions.length > 0 && selectedStyle) {
-      editImageWithReplicate("", selectedStyle)
+    if (imageVersions.length === 0 || !selectedStyle) {
+      return
     }
+    
+    // 先检查积分是否充足
+    if (userCredits < 1) {
+      console.log('积分不足，显示充值对话框')
+      setInsufficientCreditsOpen(true)
+      return
+    }
+    
+    editImageWithReplicate("", selectedStyle)
   }
 
   const handleAspectRatioClick = (ratioValue: string) => {
@@ -1037,6 +1065,53 @@ export default function ImageEditor() {
               </Button>
       </div>
     </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 积分不足对话框 */}
+      <Dialog open={insufficientCreditsOpen} onOpenChange={setInsufficientCreditsOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <div className="flex flex-col items-center space-y-4 py-4">
+            <div className="flex items-center justify-center w-16 h-16 bg-amber-100 rounded-full">
+              <CreditCard className="h-8 w-8 text-amber-600" />
+            </div>
+            
+            <div className="text-center space-y-2">
+              <h3 className="text-lg font-semibold text-gray-900">
+                积分不足
+              </h3>
+              <p className="text-sm text-gray-600">
+                您当前的积分不足以进行AI图像编辑
+              </p>
+              <p className="text-xs text-gray-500">
+                每次AI编辑需要消耗1个积分
+              </p>
+            </div>
+
+            <div className="flex items-center space-x-2 text-gray-600">
+              <Sparkles className="h-4 w-4" />
+              <span className="text-sm">当前积分：{userCredits}</span>
+            </div>
+
+            <div className="flex space-x-3 w-full">
+              <Button 
+                variant="outline" 
+                onClick={() => setInsufficientCreditsOpen(false)}
+                className="flex-1"
+              >
+                取消
+              </Button>
+              <Button 
+                onClick={() => {
+                  setInsufficientCreditsOpen(false)
+                  router.push('/pricing')
+                }}
+                className="flex-1 bg-purple-600 hover:bg-purple-700"
+              >
+                立即充值
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </>
