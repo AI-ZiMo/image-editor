@@ -1,4 +1,4 @@
-import { createServerClient } from '@/lib/supabase/server'
+import { createServiceRoleClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 
@@ -118,7 +118,7 @@ async function handlePaymentNotification(request: NextRequest) {
     }
     
     // 使用service_role客户端进行数据库操作
-    const supabase = await createServerClient()
+    const supabase = await createServiceRoleClient()
     
     // 查询原始订单信息进行金额验证
     const { data: existingOrder, error: queryError } = await supabase
