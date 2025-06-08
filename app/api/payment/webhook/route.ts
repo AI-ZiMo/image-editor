@@ -39,6 +39,8 @@ export async function POST(request: NextRequest) {
 async function handlePaymentNotification(request: NextRequest) {
   try {
     console.log('=== 收到支付回调通知 ===')
+    console.log('请求方法:', request.method)
+    console.log('请求URL:', request.url)
     
     // 获取参数（支持GET和POST）
     let params: Record<string, string> = {}
@@ -75,6 +77,11 @@ async function handlePaymentNotification(request: NextRequest) {
           break
         }
       }
+    }
+    
+    // 如果缺少sign_type参数，默认设置为MD5
+    if (!params.sign_type) {
+      params.sign_type = 'MD5'
     }
     
     console.log('回调参数:', params)
