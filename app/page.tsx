@@ -278,9 +278,9 @@ export default function HomePage() {
           </div>
         </div>
         
-        {/* Background decorations */}
-        <div className="absolute top-20 left-10 w-20 h-20 bg-purple-200 rounded-full opacity-50 animate-pulse"></div>
-        <div className="absolute bottom-20 right-10 w-32 h-32 bg-indigo-200 rounded-full opacity-50 animate-pulse delay-1000"></div>
+        {/* Background decorations - Reduced opacity on mobile for better readability */}
+        <div className="absolute top-20 left-10 w-20 h-20 bg-purple-200 rounded-full opacity-20 md:opacity-50 animate-pulse"></div>
+        <div className="absolute bottom-20 right-10 w-32 h-32 bg-indigo-200 rounded-full opacity-20 md:opacity-50 animate-pulse delay-1000"></div>
       </section>
 
       {/* AI Effects Showcase */}
@@ -445,16 +445,16 @@ export default function HomePage() {
               </div>
             </div>
             
-            {/* Screen-edge gradients - funnel effect with 100% invisible at edges */}
+            {/* Screen-edge gradients - funnel effect with 100% invisible at edges - Hidden on mobile for better readability */}
             <div 
-              className="fixed left-0 top-0 h-screen pointer-events-none z-20" 
+              className="hidden md:block fixed left-0 top-0 h-screen pointer-events-none z-20" 
               style={{ 
                 width: '300px',
                 background: 'linear-gradient(to right, white 0%, white 20%, rgba(255,255,255,0.95) 35%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0.5) 70%, rgba(255,255,255,0.2) 85%, transparent 100%)'
               }}
             ></div>
             <div 
-              className="fixed right-0 top-0 h-screen pointer-events-none z-20" 
+              className="hidden md:block fixed right-0 top-0 h-screen pointer-events-none z-20" 
               style={{ 
                 width: '300px',
                 background: 'linear-gradient(to left, white 0%, white 20%, rgba(255,255,255,0.95) 35%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0.5) 70%, rgba(255,255,255,0.2) 85%, transparent 100%)'
