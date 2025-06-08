@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
       notify_url: `${process.env.NEXT_PUBLIC_SITE_URL}/api/payment/webhook`,
       return_url: `${process.env.NEXT_PUBLIC_SITE_URL}/protected?payment_success=1&out_trade_no=${out_trade_no}`,
       pid: pid,
-      param: `out_trade_no:${out_trade_no},credits:${credits}`,
+      param: `out_trade_no:${out_trade_no}`,
       sign_type: 'MD5'
     }
     
