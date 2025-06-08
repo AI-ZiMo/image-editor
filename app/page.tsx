@@ -198,14 +198,14 @@ export default function HomePage() {
                 {/* Navigation Buttons */}
                 <button
                   onClick={prevImage}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-12 z-10 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-110"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-12 z-10 bg-white md:bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-110"
                 >
                   <ChevronLeft className="h-5 w-5 text-gray-600" />
                 </button>
                 
                 <button
                   onClick={nextImage}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-12 z-10 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-110"
+                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-12 z-10 bg-white md:bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-110"
                 >
                   <ChevronRight className="h-5 w-5 text-gray-600" />
                 </button>
@@ -584,7 +584,7 @@ export default function HomePage() {
             {/* 关闭按钮 */}
             <button
               onClick={closeModal}
-              className="absolute top-4 right-4 z-10 bg-white/80 hover:bg-white rounded-full p-2 transition-all duration-200"
+              className="absolute top-4 right-4 z-10 bg-white md:bg-white/80 hover:bg-white rounded-full p-2 transition-all duration-200"
             >
               <X className="h-6 w-6 text-gray-600" />
             </button>

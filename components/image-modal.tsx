@@ -148,7 +148,7 @@ export function ImageModal({
             <Button
               variant="outline"
               size="icon"
-              className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white shadow-lg z-10"
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white md:bg-white/90 hover:bg-white shadow-lg z-10"
               onClick={() => onNavigate!(currentIndex! - 1)}
             >
               <ChevronLeft className="h-6 w-6" />
@@ -159,7 +159,7 @@ export function ImageModal({
             <Button
               variant="outline"
               size="icon"
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white shadow-lg z-10"
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white md:bg-white/90 hover:bg-white shadow-lg z-10"
               onClick={() => onNavigate!(currentIndex! + 1)}
             >
               <ChevronRight className="h-6 w-6" />
@@ -193,7 +193,7 @@ export function ImageModal({
               
               {/* 图片计数器 */}
               {images && typeof currentIndex === 'number' && (
-                <div className="mt-3 px-3 py-1 bg-black/60 text-white text-sm rounded-full">
+                <div className="mt-3 px-3 py-1 bg-black md:bg-black/60 text-white text-sm rounded-full">
                   {currentIndex + 1} / {images.length}
                 </div>
               )}
