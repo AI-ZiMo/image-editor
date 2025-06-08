@@ -41,7 +41,7 @@ export function Navbar({ showAuthButton = true, user }: NavbarProps) {
   }
 
   return (
-    <header className="bg-white shadow-sm border-b border-purple-100">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm border-b border-purple-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link href="/" className="flex items-center space-x-2 transition-transform hover:scale-105 duration-200">
@@ -89,7 +89,7 @@ export function Navbar({ showAuthButton = true, user }: NavbarProps) {
               </>
                             )}
             <Link 
-              href="/pricing" 
+              href="/#pricing" 
               className="text-gray-600 hover:text-purple-600 relative transition-all duration-300 ease-in-out group"
             >
               <span className="relative z-10">定价</span>
@@ -103,7 +103,7 @@ export function Navbar({ showAuthButton = true, user }: NavbarProps) {
               <div className="absolute inset-x-0 bottom-0 h-0.5 bg-purple-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-in-out"></div>
             </Link>
             <Link 
-              href="/faq" 
+              href="/#faq" 
               className="text-gray-600 hover:text-purple-600 relative transition-all duration-300 ease-in-out group"
             >
               <span className="relative z-10">常见问题</span>
@@ -146,7 +146,7 @@ export function Navbar({ showAuthButton = true, user }: NavbarProps) {
                     <CreditCard className="mr-2 h-4 w-4" />
                     订单记录
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/pricing')}>
+                  <DropdownMenuItem onClick={() => router.push('/#pricing')}>
                     <Sparkles className="mr-2 h-4 w-4" />
                     积分定价
                   </DropdownMenuItem>

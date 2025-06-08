@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Navbar } from "@/components/navbar"
-import { Sparkles, Wand2, Image as ImageIcon, Palette, ArrowRight, ChevronLeft, ChevronRight, X } from "lucide-react"
+import { Sparkles, Wand2, Image as ImageIcon, Palette, ArrowRight, ChevronLeft, ChevronRight, X, ChevronDown, ChevronUp } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { useState, useEffect } from "react"
@@ -79,6 +79,7 @@ export default function HomePage() {
     type: 'prompt' | 'style',
     data: any
   } | null>(null)
+  const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null)
 
   // 自动轮播
   useEffect(() => {
@@ -109,6 +110,11 @@ export default function HomePage() {
     setSelectedComparison(null)
   }
 
+  // 切换FAQ展开状态
+  const toggleFAQ = (index: number) => {
+    setExpandedFAQ(expandedFAQ === index ? null : index)
+  }
+
   const features = [
     {
       icon: <Wand2 className="h-8 w-8 text-purple-600" />,
@@ -133,6 +139,9 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <style jsx global>{`
+        html {
+          scroll-behavior: smooth;
+        }
         .scrollbar-hide {
           -ms-overflow-style: none;
           scrollbar-width: none;
@@ -154,7 +163,7 @@ export default function HomePage() {
       <Navbar />
       
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-purple-50 to-indigo-100 pt-16 pb-20">
+      <section className="relative overflow-hidden bg-gradient-to-br from-purple-50 to-indigo-100 pt-32 pb-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Left Content */}
@@ -532,6 +541,260 @@ export default function HomePage() {
               <h3 className="text-lg font-semibold text-gray-900 mb-3">高质量输出</h3>
               <p className="text-gray-600">保持原图质量，生成高分辨率的编辑结果</p>
                     </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section id="pricing" className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header Section */}
+          <div className="text-center mb-16">
+            <div className="flex justify-center mb-6">
+              <div className="bg-purple-600 text-white p-4 rounded-2xl shadow-lg">
+                <Sparkles className="h-12 w-12" />
+              </div>
+            </div>
+            
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+              <span className="bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                积分定价
+              </span>
+            </h2>
+            
+            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+              充值积分，开始你的AI图片创作之旅。充值越多，优惠力度越大
+            </p>
+            
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 max-w-2xl mx-auto">
+              <div className="flex items-center justify-center space-x-2 text-purple-700">
+                <Sparkles className="h-5 w-5 fill-current" />
+                <span className="font-semibold">每次编辑消耗 1 个积分 • 积分永不过期 • 充多少用多少</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Pricing Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              {
+                credits: 10,
+                price: 9.9,
+                originalPrice: 12,
+                pricePerCredit: 0.99,
+                label: "入门包",
+                description: "适合轻度使用",
+                popular: false,
+                badge: "热门"
+              },
+              {
+                credits: 50,
+                price: 39.9,
+                originalPrice: 60,
+                pricePerCredit: 0.8,
+                label: "进阶包",
+                description: "适合日常创作",
+                popular: true,
+                badge: "推荐"
+              },
+              {
+                credits: 100,
+                price: 69.9,
+                originalPrice: 120,
+                pricePerCredit: 0.7,
+                label: "专业包",
+                description: "适合深度使用",
+                popular: false,
+                badge: "超值"
+              },
+              {
+                credits: 200,
+                price: 129.9,
+                originalPrice: 240,
+                pricePerCredit: 0.65,
+                label: "企业包",
+                description: "适合大量创作",
+                popular: false,
+                badge: "最划算"
+              },
+            ].map((plan) => (
+              <div 
+                key={plan.credits} 
+                className={`relative border-2 rounded-2xl p-6 ${
+                  plan.popular 
+                    ? 'border-purple-500 shadow-xl scale-105 bg-purple-50' 
+                    : 'border-gray-200 shadow-sm hover:shadow-md bg-white'
+                } transition-all duration-300 hover:scale-105`}
+              >
+                {plan.popular && (
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                    <div className="bg-purple-600 text-white px-4 py-1 rounded-full text-sm font-medium">
+                      推荐
+                    </div>
+                  </div>
+                )}
+
+                {plan.badge && !plan.popular && (
+                  <div className="absolute -top-2 left-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs px-2 py-1 rounded">
+                    {plan.badge}
+                  </div>
+                )}
+                
+                <div className="text-center space-y-4">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900">{plan.label}</h3>
+                    <p className="text-sm text-gray-500">{plan.description}</p>
+                  </div>
+                  
+                  <div>
+                    <div className="text-sm text-gray-500 line-through">
+                      原价 ¥{plan.originalPrice}
+                    </div>
+                    <div className="text-3xl font-bold text-purple-600">
+                      ¥{plan.price}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {plan.credits} 个积分
+                    </div>
+                    <div className="text-xs text-purple-600 font-medium mt-1">
+                      平均 ¥{plan.pricePerCredit}/积分
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2 text-sm text-gray-600">
+                    <div className="flex items-center justify-center space-x-2">
+                      <Sparkles className="h-4 w-4 text-green-500" />
+                      <span>可编辑 {plan.credits} 张图片</span>
+                    </div>
+                    <div className="flex items-center justify-center space-x-2">
+                      <Sparkles className="h-4 w-4 text-green-500" />
+                      <span>积分永不过期</span>
+                    </div>
+                    <div className="flex items-center justify-center space-x-2">
+                      <Sparkles className="h-4 w-4 text-green-500" />
+                      <span>高质量AI处理</span>
+                    </div>
+                  </div>
+                  
+                  <Link href="/pricing">
+                    <Button 
+                      className={`w-full ${
+                        plan.popular 
+                          ? 'bg-purple-600 hover:bg-purple-700' 
+                          : 'bg-gray-800 hover:bg-gray-900'
+                      } transition-colors duration-200`}
+                    >
+                      选择此套餐
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* More Pricing Link */}
+          <div className="text-center mt-12">
+            <Link href="/pricing">
+              <Button variant="outline" className="border-purple-200 text-purple-600 hover:bg-purple-50">
+                查看完整定价详情
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section id="faq" className="py-20 bg-gray-50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Hero Section */}
+          <div 
+            className="rounded-2xl p-8 mb-8"
+            style={{
+              background: 'linear-gradient(to right, #9333ea, #2563eb)',
+              minHeight: '160px'
+            }}
+          >
+            <h2 className="text-2xl font-bold mb-4 text-white">有疑问？我们来帮您解答</h2>
+            <p className="text-white leading-relaxed" style={{ opacity: 0.9 }}>
+              以下是用户最关心的问题汇总，如果没有找到您要的答案，请联系我们的客服团队。
+            </p>
+          </div>
+
+          {/* FAQ Items */}
+          <div className="space-y-4">
+            {[
+              {
+                question: "网站是收费的吗？收费标准是什么？",
+                answer: "是的，我们的网站采用积分制收费模式。由于网站调用先进的图片编辑大模型（如 FLUX），每次图片处理都会产生算力消耗成本。为了确保网站长期稳定运营并提供优质服务，我们采用合理的收费标准。新用户注册即可获得免费体验积分，后续可根据需要购买积分套餐。",
+                category: "收费相关"
+              },
+              {
+                question: "如何使用这个AI图片编辑工具？",
+                answer: "使用非常简单，只需三个步骤：\n1. 上传您的原始图片（支持 JPG、PNG 等常见格式）\n2. 选择合适的图片输出比例（1:1、16:9、9:16 等）\n3. 输入您的编辑需求描述，或选择我们预设的热门风格模板\n\n系统会自动处理您的图片，通常在30-60秒内完成。",
+                category: "使用方法"
+              },
+              {
+                question: "支持二次编辑和批量处理吗？",
+                answer: "当然支持！这是我们的核心优势之一：\n• 无限次二次编辑：可以在之前的编辑结果基础上继续修改\n• 编辑链管理：可以查看完整的编辑历史链条\n• 灵活删除：支持删除中间的编辑结果，保留您满意的版本\n• 项目管理：每个原图及其所有编辑版本构成一个项目，便于管理",
+                category: "功能特色"
+              },
+              {
+                question: "我的图片数据安全吗？",
+                answer: "您的数据安全是我们的首要关注：\n• 所有图片均存储在安全的云端服务器\n• 采用企业级加密技术保护您的数据\n• 严格的访问控制，只有您能查看自己的图片\n• 定期备份，防止数据丢失\n• 遵循相关隐私保护法规\n\n我们承诺不会将您的图片用于任何商业用途或与第三方分享。",
+                category: "隐私安全"
+              }
+            ].map((faq, index) => {
+              const isExpanded = expandedFAQ === index
+              return (
+                <div key={index} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                  {/* FAQ Header - 可点击 */}
+                  <button
+                    onClick={() => toggleFAQ(index)}
+                    className="w-full px-6 py-4 text-left hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-inset"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-900 mb-2">{faq.question}</h3>
+                        <div className="inline-block bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-medium">
+                          {faq.category}
+                        </div>
+                      </div>
+                      <div className="ml-4 flex-shrink-0">
+                        {isExpanded ? (
+                          <ChevronUp className="h-5 w-5 text-gray-500" />
+                        ) : (
+                          <ChevronDown className="h-5 w-5 text-gray-500" />
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                  
+                  {/* FAQ Content - 可展开折叠 */}
+                  <div 
+                    className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                      isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                    }`}
+                  >
+                    <div className="px-6 pb-4 border-t border-gray-100">
+                      <p className="text-gray-600 leading-relaxed whitespace-pre-line pt-4">
+                        {faq.answer}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* More FAQ Link */}
+          <div className="text-center mt-8">
+            <Link href="/faq">
+              <Button variant="outline" className="border-purple-200 text-purple-600 hover:bg-purple-50">
+                查看更多问题
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
