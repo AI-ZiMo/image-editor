@@ -80,6 +80,12 @@ export default function HomePage() {
     data: any
   } | null>(null)
   const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null)
+  const [galleryOffset, setGalleryOffset] = useState(0)
+  const [isGalleryPaused, setIsGalleryPaused] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragStartX, setDragStartX] = useState(0)
+  const [dragStartOffset, setDragStartOffset] = useState(0)
+  const [isManualControl, setIsManualControl] = useState(false)
 
   // 自动轮播
   useEffect(() => {
@@ -89,6 +95,27 @@ export default function HomePage() {
 
     return () => clearInterval(interval)
   }, [imageComparisons.length])
+
+  // 全局鼠标事件处理（用于拖拽）
+  useEffect(() => {
+    if (!isDragging) return
+
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      handleDragMove(e.clientX)
+    }
+
+    const handleGlobalMouseUp = () => {
+      handleDragEnd()
+    }
+
+    document.addEventListener('mousemove', handleGlobalMouseMove)
+    document.addEventListener('mouseup', handleGlobalMouseUp)
+
+    return () => {
+      document.removeEventListener('mousemove', handleGlobalMouseMove)
+      document.removeEventListener('mouseup', handleGlobalMouseUp)
+    }
+  }, [isDragging, dragStartX, dragStartOffset, galleryOffset])
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % imageComparisons.length)
@@ -113,6 +140,77 @@ export default function HomePage() {
   // 切换FAQ展开状态
   const toggleFAQ = (index: number) => {
     setExpandedFAQ(expandedFAQ === index ? null : index)
+  }
+
+  // 画廊左右滑动控制
+  const slideGalleryLeft = () => {
+    setIsManualControl(true)
+    setGalleryOffset(prev => Math.min(prev + 400, 0))
+    setIsGalleryPaused(true)
+    setTimeout(() => {
+      setIsGalleryPaused(false)
+      setIsManualControl(false)
+    }, 3000) // 3秒后恢复自动轮播
+  }
+
+  const slideGalleryRight = () => {
+    setIsManualControl(true)
+    setGalleryOffset(prev => prev - 400)
+    setIsGalleryPaused(true)
+    setTimeout(() => {
+      setIsGalleryPaused(false)
+      setIsManualControl(false)
+    }, 3000) // 3秒后恢复自动轮播
+  }
+
+  // 拖拽事件处理
+  const handleDragStart = (clientX: number) => {
+    setIsDragging(true)
+    setIsManualControl(true)
+    setDragStartX(clientX)
+    setDragStartOffset(galleryOffset)
+    setIsGalleryPaused(true)
+  }
+
+  const handleDragMove = (clientX: number) => {
+    if (!isDragging) return
+    const deltaX = clientX - dragStartX
+    setGalleryOffset(dragStartOffset + deltaX)
+  }
+
+  const handleDragEnd = () => {
+    setIsDragging(false)
+    setTimeout(() => {
+      setIsGalleryPaused(false)
+      setIsManualControl(false)
+    }, 3000) // 3秒后恢复自动轮播
+  }
+
+  // 鼠标事件
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault()
+    handleDragStart(e.clientX)
+  }
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    handleDragMove(e.clientX)
+  }
+
+  const handleMouseUp = () => {
+    handleDragEnd()
+  }
+
+  // 触摸事件
+  const handleTouchStart = (e: React.TouchEvent) => {
+    handleDragStart(e.touches[0].clientX)
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    handleDragMove(e.touches[0].clientX)
+  }
+
+  const handleTouchEnd = () => {
+    handleDragEnd()
   }
 
   const features = [
@@ -158,6 +256,19 @@ export default function HomePage() {
         }
         .animate-scroll-horizontal:hover {
           animation-play-state: paused;
+        }
+        .animate-scroll-horizontal.paused {
+          animation-play-state: paused;
+        }
+        .manual-control {
+          animation: none !important;
+        }
+        .gallery-container {
+          cursor: grab;
+        }
+        .gallery-container.dragging {
+          cursor: grabbing;
+          user-select: none;
         }
       `}</style>
       <Navbar />
@@ -306,8 +417,34 @@ export default function HomePage() {
           
                     {/* Full-Screen Image Gallery */}
           <div className="relative" style={{ marginLeft: 'calc(-50vw + 50%)', marginRight: 'calc(-50vw + 50%)', width: '100vw' }}>
-            {/* Animated container */}
-            <div className="animate-scroll-horizontal" style={{ position: 'relative' }}>
+            {/* Navigation Buttons */}
+            <button
+              onClick={slideGalleryLeft}
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-30 bg-white/90 hover:bg-white rounded-full p-3 shadow-lg transition-all duration-200 hover:scale-110 backdrop-blur-sm"
+            >
+              <ChevronLeft className="h-6 w-6 text-gray-600" />
+            </button>
+            
+            <button
+              onClick={slideGalleryRight}
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-30 bg-white/90 hover:bg-white rounded-full p-3 shadow-lg transition-all duration-200 hover:scale-110 backdrop-blur-sm"
+            >
+              <ChevronRight className="h-6 w-6 text-gray-600" />
+            </button>
+
+            {/* Animated container with manual control */}
+            <div 
+              className={`gallery-container ${isManualControl ? 'manual-control' : 'animate-scroll-horizontal'} ${isGalleryPaused && !isManualControl ? 'paused' : ''} ${isDragging ? 'dragging' : ''}`} 
+              style={{ 
+                position: 'relative',
+                transform: isManualControl ? `translateX(${galleryOffset}px)` : undefined,
+                transition: isDragging ? 'none' : 'transform 0.3s ease-out'
+              }}
+              onMouseDown={handleMouseDown}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
               {/* Display all real data in multiple rows */}
               <div className="space-y-4" style={{ width: '200%' }}>
                 {(() => {
@@ -451,6 +588,25 @@ export default function HomePage() {
                     </div>
                   ))
                 })()}
+              </div>
+            </div>
+            
+            {/* Gallery Controls Indicator */}
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 flex items-center space-x-3 bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg">
+              <div className="text-xs text-gray-600">
+                {isDragging ? '拖拽中...' : '左右滑动或拖拽查看更多'}
+              </div>
+              <div className="flex space-x-1">
+                {[0, 1, 2, 3, 4].map((index) => (
+                  <div 
+                    key={index}
+                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                      Math.abs(galleryOffset / 400) === index 
+                        ? 'bg-purple-600 w-4' 
+                        : 'bg-gray-300'
+                    }`}
+                  ></div>
+                ))}
               </div>
             </div>
             
