@@ -1,4 +1,7 @@
 {
+  "name": "xiaomao-ai-image-editor",
+  "version": "1.0.0",
+  "description": "小猫AI图片编辑 - 代替PS的AI图片编辑工具",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",

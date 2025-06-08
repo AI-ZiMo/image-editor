@@ -10,8 +10,25 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "Next.js and Supabase Starter Kit",
-  description: "The fastest way to build apps with Next.js and Supabase",
+  title: "小猫AI图片编辑 - 代替PS的AI图片编辑工具",
+  description: "小猫AI图片编辑，采用最先进的图片大模型，保持图片一致性，拥有顶级的AI图片编辑体验。支持智能风格转换、提示词编辑、老照片上色等多种AI功能。",
+  keywords: "AI图片编辑,人工智能图片处理,智能风格转换,提示词编辑,老照片上色,图片风格化,AI图像生成",
+  authors: [{ name: "小猫AI图片编辑团队" }],
+  creator: "小猫AI图片编辑",
+  publisher: "小猫AI图片编辑",
+  applicationName: "小猫AI图片编辑",
+  openGraph: {
+    title: "小猫AI图片编辑 - 代替PS的AI图片编辑工具",
+    description: "采用最先进的图片大模型，保持图片一致性，拥有顶级的AI图片编辑体验",
+    type: "website",
+    locale: "zh_CN",
+    siteName: "小猫AI图片编辑"
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "小猫AI图片编辑 - 代替PS的AI图片编辑工具",
+    description: "采用最先进的图片大模型，保持图片一致性，拥有顶级的AI图片编辑体验"
+  }
 };
 
 const stagewiseConfig = {

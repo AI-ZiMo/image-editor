@@ -1,105 +1,145 @@
-<a href="https://demo-nextjs-with-supabase.vercel.app/">
-  <img alt="Next.js and Supabase Starter Kit - the fastest way to build apps with Next.js and Supabase" src="https://demo-nextjs-with-supabase.vercel.app/opengraph-image.png">
-  <h1 align="center">Next.js and Supabase Starter Kit</h1>
-</a>
+# 小猫AI图片编辑
 
 <p align="center">
- The fastest way to build apps with Next.js and Supabase
+  <img src="https://img.shields.io/badge/AI-图片编辑-purple" alt="AI图片编辑">
+  <img src="https://img.shields.io/badge/Next.js-14-black" alt="Next.js">
+  <img src="https://img.shields.io/badge/TypeScript-5-blue" alt="TypeScript">
+  <img src="https://img.shields.io/badge/Tailwind-CSS-38BDF8" alt="Tailwind CSS">
+</p>
+
+<h1 align="center">小猫AI图片编辑</h1>
+
+<p align="center">
+ 代替PS的AI图片编辑工具 - 采用最先进的图片大模型，保持图片一致性，拥有顶级的AI图片编辑体验
 </p>
 
 <p align="center">
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#demo"><strong>Demo</strong></a> ·
-  <a href="#deploy-to-vercel"><strong>Deploy to Vercel</strong></a> ·
-  <a href="#clone-and-run-locally"><strong>Clone and run locally</strong></a> ·
-  <a href="#feedback-and-issues"><strong>Feedback and issues</strong></a>
-  <a href="#more-supabase-examples"><strong>More Examples</strong></a>
+  <a href="#features"><strong>功能特性</strong></a> ·
+  <a href="#tech-stack"><strong>技术栈</strong></a> ·
+  <a href="#getting-started"><strong>快速开始</strong></a> ·
+  <a href="#deployment"><strong>部署</strong></a>
 </p>
 <br/>
 
-## Features
+## 功能特性
 
-- Works across the entire [Next.js](https://nextjs.org) stack
-  - App Router
-  - Pages Router
-  - Middleware
-  - Client
-  - Server
-  - It just works!
-- supabase-ssr. A package to configure Supabase Auth to use cookies
-- Password-based authentication block installed via the [Supabase UI Library](https://supabase.com/ui/docs/nextjs/password-based-auth)
-- Styling with [Tailwind CSS](https://tailwindcss.com)
-- Components with [shadcn/ui](https://ui.shadcn.com/)
-- Optional deployment with [Supabase Vercel Integration and Vercel deploy](#deploy-your-own)
-  - Environment variables automatically assigned to Vercel project
+### 🎨 AI图片编辑
+- **智能提示词编辑** - 通过文字描述轻松编辑图片内容
+- **多种风格转换** - 支持水彩画、动漫、油画、贴纸等多种艺术风格
+- **老照片上色** - AI智能为黑白照片添加自然色彩
+- **高质量输出** - 保持原图质量，生成高分辨率结果
 
-## Demo
+### 🚀 技术特性
+- **Next.js 14** - 使用最新的App Router架构
+- **TypeScript** - 完整的类型安全
+- **Supabase** - 现代化的后端即服务
+- **Tailwind CSS** - 响应式设计
+- **Shadcn/ui** - 美观的UI组件库
 
-You can view a fully working demo at [demo-nextjs-with-supabase.vercel.app](https://demo-nextjs-with-supabase.vercel.app/).
+### 💡 用户体验
+- **全屏预览** - 点击任意对比图片可全屏查看详细效果
+- **响应式设计** - 完美适配桌面端和移动端
+- **用户认证** - 安全的登录注册系统
+- **历史记录** - 保存和管理您的创作历史
 
-## Deploy to Vercel
+## 技术栈
 
-Vercel deployment will guide you through creating a Supabase account and project.
+- **前端**: Next.js 14, TypeScript, Tailwind CSS, Shadcn/ui
+- **后端**: Supabase (PostgreSQL + Auth + Storage)
+- **AI服务**: Replicate AI 模型
+- **部署**: Vercel
+- **状态管理**: React Hooks
+- **图片处理**: Next.js Image 组件
 
-After installation of the Supabase integration, all relevant environment variables will be assigned to the project so the deployment is fully functioning.
+## 快速开始
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&project-name=nextjs-with-supabase&repository-name=nextjs-with-supabase&demo-title=nextjs-with-supabase&demo-description=This+starter+configures+Supabase+Auth+to+use+cookies%2C+making+the+user%27s+session+available+throughout+the+entire+Next.js+app+-+Client+Components%2C+Server+Components%2C+Route+Handlers%2C+Server+Actions+and+Middleware.&demo-url=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2F&external-id=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&demo-image=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2Fopengraph-image.png)
+### 环境要求
 
-The above will also clone the Starter kit to your GitHub, you can clone that locally and develop locally.
+- Node.js 18+ 
+- pnpm (推荐) 或 npm
+- Supabase 账户
 
-If you wish to just develop locally and not deploy to Vercel, [follow the steps below](#clone-and-run-locally).
+### 安装步骤
 
-## Clone and run locally
-
-1. You'll first need a Supabase project which can be made [via the Supabase dashboard](https://database.new)
-
-2. Create a Next.js app using the Supabase Starter template npx command
-
+1. **克隆项目**
    ```bash
-   npx create-next-app --example with-supabase with-supabase-app
+   git clone https://github.com/your-username/xiaomao-ai-image-editor.git
+   cd xiaomao-ai-image-editor
    ```
 
+2. **安装依赖**
    ```bash
-   yarn create next-app --example with-supabase with-supabase-app
+   pnpm install
    ```
 
+3. **环境配置**
+   
+   复制 `.env.example` 为 `.env.local` 并填入以下配置：
+   
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   REPLICATE_API_TOKEN=your_replicate_api_token
+   ```
+
+4. **数据库设置**
+   
+   在 Supabase 项目中执行 `sqls/` 目录下的SQL脚本初始化数据库
+
+5. **启动开发服务器**
    ```bash
-   pnpm create next-app --example with-supabase with-supabase-app
+   pnpm dev
    ```
 
-3. Use `cd` to change into the app's directory
+   应用将运行在 [http://localhost:3000](http://localhost:3000)
 
-   ```bash
-   cd with-supabase-app
-   ```
+## 部署
 
-4. Rename `.env.example` to `.env.local` and update the following:
+### Vercel 部署（推荐）
 
-   ```
-   NEXT_PUBLIC_SUPABASE_URL=[INSERT SUPABASE PROJECT URL]
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=[INSERT SUPABASE PROJECT API ANON KEY]
-   ```
+1. Fork 此项目到您的 GitHub
+2. 在 [Vercel](https://vercel.com) 中导入项目
+3. 配置环境变量
+4. 部署完成
 
-   Both `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` can be found in [your Supabase project's API settings](https://supabase.com/dashboard/project/_?showConnect=true)
+### 其他平台
 
-5. You can now run the Next.js local development server:
+项目支持部署到任何支持 Next.js 的平台，如 Netlify、Railway 等。
 
-   ```bash
-   npm run dev
-   ```
+## 项目结构
 
-   The starter kit should now be running on [localhost:3000](http://localhost:3000/).
+```
+xiaomao-ai-image-editor/
+├── app/                    # Next.js App Router
+│   ├── (auth)/            # 认证相关页面
+│   ├── protected/         # 需要登录的页面
+│   ├── api/               # API 路由
+│   └── page.tsx           # 首页
+├── components/            # 可复用组件
+│   ├── ui/               # UI 基础组件
+│   └── navbar.tsx        # 导航栏
+├── lib/                   # 工具库
+│   ├── supabase/         # Supabase 配置
+│   └── utils.ts          # 工具函数
+├── sqls/                  # 数据库脚本
+└── public/               # 静态资源
+```
 
-6. This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
+## 贡献
 
-> Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
+欢迎提交 Pull Request 或创建 Issue 来帮助改进项目。
 
-## Feedback and issues
+## 许可证
 
-Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).
+本项目采用 MIT 许可证。详见 [LICENSE](LICENSE) 文件。
 
-## More Supabase examples
+## 联系我们
 
-- [Next.js Subscription Payments Starter](https://github.com/vercel/nextjs-subscription-payments)
-- [Cookie-based Auth and the Next.js 13 App Router (free course)](https://youtube.com/playlist?list=PL5S4mPUpp4OtMhpnp93EFSo42iQ40XjbF)
-- [Supabase Auth and the Next.js App Router](https://github.com/supabase/supabase/tree/master/examples/auth/nextjs)
+- 项目主页: [小猫AI图片编辑](https://your-domain.com)
+- 问题反馈: [GitHub Issues](https://github.com/your-username/xiaomao-ai-image-editor/issues)
+
+---
+
+<p align="center">
+  Made with ❤️ by 小猫AI图片编辑团队
+</p>

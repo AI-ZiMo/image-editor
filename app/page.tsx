@@ -537,12 +537,12 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-purple-600 to-indigo-600">
+      <section className="py-20 bg-gradient-to-r from-purple-50 to-indigo-50">
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6 text-white">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6 text-gray-900">
             准备好体验AI的魔法了吗？
           </h2>
-          <p className="text-xl mb-8 text-white opacity-90">
+          <p className="text-xl mb-8 text-gray-700">
             立即开始，让您的照片焕发全新的艺术光彩
           </p>
           <Link href="/protected">
@@ -562,10 +562,10 @@ export default function HomePage() {
               <div className="bg-purple-600 text-white p-2 rounded-lg">
                 <Sparkles className="h-5 w-5" />
               </div>
-              <span className="text-xl font-bold">魔图工坊</span>
+              <span className="text-xl font-bold">小猫AI图片编辑</span>
             </div>
             <p className="text-gray-400">
-              © 2024 魔图工坊. 保留所有权利.
+              © 2024 小猫AI图片编辑. 保留所有权利.
             </p>
           </div>
         </div>

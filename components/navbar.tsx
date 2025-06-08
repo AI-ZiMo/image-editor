@@ -49,8 +49,8 @@ export function Navbar({ showAuthButton = true, user }: NavbarProps) {
               <Sparkles className="h-5 w-5" />
             </div>
             <div>
-              <div className="text-xl font-bold text-purple-600">魔图工坊</div>
-              <div className="text-xs text-gray-500">AI图片风格转换</div>
+              <div className="text-xl font-bold text-purple-600">小猫AI图片编辑</div>
+              <div className="text-xs text-gray-500">代替PS的AI图片编辑工具</div>
             </div>
           </Link>
           
