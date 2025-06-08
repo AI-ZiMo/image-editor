@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
     
     // 构建支付参数
     const paymentParams = {
-      name: `AI图片编辑积分充值 ${credits}积分`,
+      name: `积分充值 ${credits}`,
       money: amount.toString(),
       type: paymentType,
       out_trade_no: out_trade_no,
