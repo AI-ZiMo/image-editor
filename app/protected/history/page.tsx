@@ -10,8 +10,31 @@ import { createClient } from "@/lib/supabase/client"
 import { ImageModal } from "@/components/image-modal"
 import Link from "next/link"
 
+interface DatabaseProject {
+  project_id: string
+  project_name: string | null
+  original_image_url: string
+  latest_image_url: string
+  total_images: number
+  created_at: string
+  updated_at: string
+}
+
+interface ProjectImage {
+  id: string
+  parent_id: string | null
+  image_url: string
+  storage_path: string | null
+  prompt: string | null
+  style: string | null
+  is_original: boolean
+  created_at: string
+  chain_order: number
+}
+
 interface HistoryProject {
   id: string
+  name: string | null
   originalImage: {
     url: string
     createdAt: string
@@ -21,19 +44,10 @@ interface HistoryProject {
     url: string
     prompt?: string
     style?: string
-    aspectRatio?: string
     createdAt: string
   }[]
-}
-
-interface HistoryRecord {
-  id: string
-  originalImageUrl: string
-  generatedImageUrl: string
-  prompt?: string
-  style?: string
-  aspectRatio?: string
-  createdAt: string
+  totalImages: number
+  updatedAt: string
 }
 
 export default function HistoryPage() {
@@ -54,246 +68,88 @@ export default function HistoryPage() {
 
   const loadHistory = async () => {
     try {
-      // 使用真实的Unsplash图片作为历史记录数据
-      const mockProjects: HistoryProject[] = [
-        {
-          id: "project-1",
-          originalImage: {
-            url: "https://images.unsplash.com/photo-1544511916-0148ccdeb877?w=400&h=400&fit=crop",
-            createdAt: "2024-01-15T10:30:00Z"
-          },
-          editedImages: [
-            {
-              id: "edit-1",
-              url: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=400&h=400&fit=crop",
-              style: "吉卜力风格",
-              aspectRatio: "1:1",
-              createdAt: "2024-01-15T10:35:00Z"
-            },
-            {
-              id: "edit-2", 
-              url: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=400&fit=crop",
-              prompt: "增加温暖的光线效果",
-              aspectRatio: "1:1",
-              createdAt: "2024-01-15T10:40:00Z"
-            },
-            {
-              id: "edit-3",
-              url: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=250&fit=crop",
-              style: "水彩画风格",
-              aspectRatio: "16:9",
-              createdAt: "2024-01-15T10:45:00Z"
-            },
-            {
-              id: "edit-4",
-              url: "https://images.unsplash.com/photo-1552374196-c4e7ffc6e126?w=400&h=300&fit=crop",
-              style: "油画风格",
-              aspectRatio: "4:3",
-              createdAt: "2024-01-15T10:50:00Z"
-            },
-            {
-              id: "edit-5",
-              url: "https://images.unsplash.com/photo-1484515991647-c5760fcecfc7?w=400&h=400&fit=crop",
-              prompt: "转换为像素艺术风格，8位游戏感",
-              aspectRatio: "1:1",
-              createdAt: "2024-01-15T10:55:00Z"
-            },
-            {
-              id: "edit-6",
-              url: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=225&h=400&fit=crop",
-              style: "赛博朋克",
-              aspectRatio: "9:16",
-              createdAt: "2024-01-15T11:00:00Z"
-            }
-          ]
-        },
-        {
-          id: "project-2",
-          originalImage: {
-            url: "https://images.unsplash.com/photo-1494790108755-2616c27b7daa?w=400&h=400&fit=crop",
-            createdAt: "2024-01-14T15:45:00Z"
-          },
-          editedImages: [
-            {
-              id: "edit-4",
-              url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=225&fit=crop",
-              prompt: "给她戴上眼镜，将背景改为夕阳西下的海滩",
-              aspectRatio: "16:9",
-              createdAt: "2024-01-14T15:50:00Z"
-            },
-            {
-              id: "edit-5",
-              url: "https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=225&h=400&fit=crop",
-              style: "赛博朋克",
-              aspectRatio: "9:16",
-              createdAt: "2024-01-14T16:00:00Z"
-            }
-          ]
-        },
-        {
-          id: "project-3",
-          originalImage: {
-            url: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=crop",
-            createdAt: "2024-01-13T14:20:00Z"
-          },
-          editedImages: [
-            {
-              id: "edit-6",
-              url: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=300&fit=crop",
-              style: "油画风格",
-              aspectRatio: "4:3",
-              createdAt: "2024-01-13T14:25:00Z"
-            }
-          ]
-        },
-        {
-          id: "project-4",
-          originalImage: {
-            url: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop",
-            createdAt: "2024-01-12T09:15:00Z"
-          },
-          editedImages: [
-            {
-              id: "edit-7",
-              url: "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=400&h=400&fit=crop",
-              style: "动漫风格",
-              aspectRatio: "1:1",
-              createdAt: "2024-01-12T09:20:00Z"
-            },
-            {
-              id: "edit-8",
-              url: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&h=225&fit=crop",
-              prompt: "添加樱花背景，柔和粉色调",
-              aspectRatio: "16:9",
-              createdAt: "2024-01-12T09:25:00Z"
-            }
-          ]
-        },
-        {
-          id: "project-5",
-          originalImage: {
-            url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop",
-            createdAt: "2024-01-11T16:30:00Z"
-          },
-          editedImages: [
-            {
-              id: "edit-9",
-              url: "https://images.unsplash.com/photo-1507591064344-4c6ce005b128?w=400&h=400&fit=crop",
-              style: "素描风格",
-              aspectRatio: "1:1",
-              createdAt: "2024-01-11T16:35:00Z"
-            }
-          ]
-        },
-        {
-          id: "project-6",
-          originalImage: {
-            url: "https://images.unsplash.com/photo-1554151228-14d9def656e4?w=400&h=400&fit=crop",
-            createdAt: "2024-01-10T14:45:00Z"
-          },
-          editedImages: [
-            {
-              id: "edit-10",
-              url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&h=400&fit=crop",
-              style: "梵高风格",
-              aspectRatio: "1:1",
-              createdAt: "2024-01-10T14:50:00Z"
-            },
-            {
-              id: "edit-11",
-              url: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&h=300&fit=crop",
-              prompt: "转换为黑白照片，增强对比度",
-              aspectRatio: "4:3",
-              createdAt: "2024-01-10T14:55:00Z"
-            }
-          ]
-        },
-        {
-          id: "project-7",
-          originalImage: {
-            url: "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=400&h=400&fit=crop",
-            createdAt: "2024-01-09T11:20:00Z"
-          },
-          editedImages: [
-            {
-              id: "edit-12",
-              url: "https://images.unsplash.com/photo-1484515991647-c5760fcecfc7?w=400&h=400&fit=crop",
-              style: "像素艺术",
-              aspectRatio: "1:1",
-              createdAt: "2024-01-09T11:25:00Z"
-            }
-          ]
-        },
-        {
-          id: "project-8",
-          originalImage: {
-            url: "https://images.unsplash.com/photo-1522075469751-3847ae2c1b2e?w=400&h=400&fit=crop",
-            createdAt: "2024-01-08T08:10:00Z"
-          },
-          editedImages: [
-            {
-              id: "edit-13",
-              url: "https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=400&h=225&fit=crop",
-              prompt: "添加科技感元素，霓虹灯效果",
-              aspectRatio: "16:9",
-              createdAt: "2024-01-08T08:15:00Z"
-            },
-            {
-              id: "edit-14",
-              url: "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=225&h=400&fit=crop",
-              style: "赛博朋克",
-              aspectRatio: "9:16",
-              createdAt: "2024-01-08T08:20:00Z"
-            }
-          ]
-        },
-        {
-          id: "project-9",
-          originalImage: {
-            url: "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=400&h=400&fit=crop",
-            createdAt: "2024-01-07T13:30:00Z"
-          },
-          editedImages: [
-            {
-              id: "edit-15",
-              url: "https://images.unsplash.com/photo-1552374196-c4e7ffc6e126?w=400&h=400&fit=crop",
-              style: "水彩画风格",
-              aspectRatio: "1:1",
-              createdAt: "2024-01-07T13:35:00Z"
-            }
-          ]
-        },
-        {
-          id: "project-10",
-          originalImage: {
-            url: "https://images.unsplash.com/photo-1474176857210-7287d38d27c6?w=400&h=400&fit=crop",
-            createdAt: "2024-01-06T10:00:00Z"
-          },
-          editedImages: [
-            {
-              id: "edit-16",
-              url: "https://images.unsplash.com/photo-1502764613149-7f1d229e230f?w=400&h=300&fit=crop",
-              style: "油画风格",
-              aspectRatio: "4:3",
-              createdAt: "2024-01-06T10:05:00Z"
-            },
-            {
-              id: "edit-17",
-              url: "https://images.unsplash.com/photo-1507591064344-4c6ce005b128?w=400&h=225&fit=crop",
-              prompt: "增加复古滤镜，暖色调处理",
-              aspectRatio: "16:9",
-              createdAt: "2024-01-06T10:10:00Z"
-            }
-          ]
-        }
-      ]
+      console.log('=== 加载用户历史记录 ===')
       
-      setTimeout(() => {
-        setHistoryProjects(mockProjects)
-        setIsLoading(false)
-      }, 500)
+      // 获取用户项目列表
+      const response = await fetch('/api/user-history')
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const data = await response.json()
+      console.log('项目列表数据:', data)
+      
+      if (!data.projects || data.projects.length === 0) {
+        console.log('用户暂无历史记录')
+        setHistoryProjects([])
+        return
+      }
+      
+      // 为每个项目获取详细的图片链
+      const projectsWithImages = await Promise.all(
+        data.projects.map(async (project: DatabaseProject) => {
+          try {
+            console.log(`获取项目 ${project.project_id} 的图片链`)
+            
+            const imagesResponse = await fetch(`/api/project-images?projectId=${project.project_id}`)
+            if (!imagesResponse.ok) {
+              console.error(`获取项目图片失败: ${imagesResponse.status}`)
+              throw new Error(`Failed to fetch images for project ${project.project_id}`)
+            }
+            
+            const imagesData = await imagesResponse.json()
+            console.log(`项目 ${project.project_id} 图片数据:`, imagesData)
+            
+            const images: ProjectImage[] = imagesData.images || []
+            
+            // 分离原图和编辑图片
+            const originalImage = images.find(img => img.is_original)
+            const editedImages = images.filter(img => !img.is_original)
+            
+            const historyProject: HistoryProject = {
+              id: project.project_id,
+              name: project.project_name,
+              originalImage: {
+                url: originalImage?.image_url || project.original_image_url,
+                createdAt: originalImage?.created_at || project.created_at
+              },
+              editedImages: editedImages.map(img => ({
+                id: img.id,
+                url: img.image_url,
+                prompt: img.prompt || undefined,
+                style: img.style || undefined,
+                createdAt: img.created_at
+              })),
+              totalImages: project.total_images,
+              updatedAt: project.updated_at
+            }
+            
+            return historyProject
+          } catch (error) {
+            console.error(`处理项目 ${project.project_id} 时出错:`, error)
+            // 如果获取图片失败，至少返回基本项目信息
+            return {
+              id: project.project_id,
+              name: project.project_name,
+              originalImage: {
+                url: project.original_image_url,
+                createdAt: project.created_at
+              },
+              editedImages: [],
+              totalImages: project.total_images,
+              updatedAt: project.updated_at
+            }
+          }
+        })
+      )
+      
+      console.log('完整的历史项目数据:', projectsWithImages)
+      setHistoryProjects(projectsWithImages)
+      
     } catch (error) {
       console.error('加载历史记录失败:', error)
+      setHistoryProjects([])
+    } finally {
       setIsLoading(false)
     }
   }
@@ -426,7 +282,9 @@ export default function HistoryPage() {
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center space-x-3">
-                        <h3 className="text-lg font-semibold">项目 {project.id.split('-')[1]}</h3>
+                        <h3 className="text-lg font-semibold">
+                          {project.name || `项目 ${project.id.substring(0, 8)}`}
+                        </h3>
                         <div className="flex items-center text-sm text-gray-500">
                           <Clock className="h-4 w-4 mr-1" />
                           {formatDate(project.originalImage.createdAt)}
