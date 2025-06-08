@@ -61,13 +61,15 @@ export function SignUpForm({
       // 短暂延迟后跳转
       setTimeout(() => {
         router.push("/sign-up-success");
+        // 跳转完成后再结束加载状态
+        setIsLoading(false);
       }, 1000);
       
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "注册失败，请重试";
       setError(errorMessage);
       toast.error(errorMessage);
-    } finally {
+      // 只有在出错时才立即结束加载状态
       setIsLoading(false);
     }
   };
