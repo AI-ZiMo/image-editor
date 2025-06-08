@@ -95,20 +95,21 @@ export function Navbar({ showAuthButton = true, user }: NavbarProps) {
               <span className="relative z-10">定价</span>
               <div className="absolute inset-x-0 bottom-0 h-0.5 bg-purple-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-in-out"></div>
             </Link>
-            <a 
-              href="#" 
+            <Link 
+              href="/about" 
               className="text-gray-600 hover:text-purple-600 relative transition-all duration-300 ease-in-out group"
             >
               <span className="relative z-10">关于我们</span>
               <div className="absolute inset-x-0 bottom-0 h-0.5 bg-purple-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-in-out"></div>
-            </a>
-            <a 
-              href="#" 
+            </Link>
+            <Link 
+              href="/faq" 
               className="text-gray-600 hover:text-purple-600 relative transition-all duration-300 ease-in-out group"
             >
               <span className="relative z-10">常见问题</span>
               <div className="absolute inset-x-0 bottom-0 h-0.5 bg-purple-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-in-out"></div>
-            </a>
+            </Link>
+
           </nav>
           
           {/* 右侧用户信息或登录按钮 */}
