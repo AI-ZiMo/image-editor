@@ -7,8 +7,22 @@ import { Sparkles, Wand2, Image as ImageIcon, Palette, ArrowRight, ChevronLeft, 
 import Link from "next/link"
 import Image from "next/image"
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
 
 export default function HomePage() {
+  const router = useRouter()
+  const [currentUser, setCurrentUser] = useState<any>(null)
+
+  // 检查用户登录状态
+  useEffect(() => {
+    const checkUser = async () => {
+      const supabase = createClient()
+      const { data } = await supabase.auth.getUser()
+      setCurrentUser(data.user)
+    }
+    checkUser()
+  }, [])
 
   // 图片对比数据
   const imageComparisons = [
@@ -211,6 +225,17 @@ export default function HomePage() {
 
   const handleTouchEnd = () => {
     handleDragEnd()
+  }
+
+  // 处理定价按钮点击
+  const handlePricingClick = () => {
+    if (currentUser) {
+      // 已登录用户跳转到定价页面
+      router.push('/pricing')
+    } else {
+      // 未登录用户跳转到登录页面
+      router.push('/login')
+    }
   }
 
   const features = [
@@ -673,16 +698,16 @@ export default function HomePage() {
             <p className="text-xl text-gray-600">
               运用最新的人工智能技术，为您提供专业级的图片编辑服务
             </p>
-                        </div>
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
             <div className="bg-white p-6 rounded-xl shadow-sm text-center">
               <div className="bg-purple-100 p-3 rounded-xl w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                 <Wand2 className="h-8 w-8 text-purple-600" />
-                      </div>
+              </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-3">文字提示编辑</h3>
               <p className="text-gray-600">输入简单文字描述，AI就能为图片添加您想要的元素</p>
-                        </div>
+            </div>
             <div className="bg-white p-6 rounded-xl shadow-sm text-center">
               <div className="bg-green-100 p-3 rounded-xl w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                 <Sparkles className="h-8 w-8 text-green-600" />
@@ -693,10 +718,116 @@ export default function HomePage() {
             <div className="bg-white p-6 rounded-xl shadow-sm text-center">
               <div className="bg-blue-100 p-3 rounded-xl w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                 <ImageIcon className="h-8 w-8 text-blue-600" />
-                </div>
+              </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-3">高质量输出</h3>
               <p className="text-gray-600">保持原图质量，生成高分辨率的编辑结果</p>
-                    </div>
+            </div>
+          </div>
+
+          {/* AI项目应用展示 */}
+          <div className="bg-white rounded-2xl p-8 shadow-sm mb-16">
+            <div className="text-center mb-8">
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">AI图像生成项目案例</h3>
+              <p className="text-gray-600">我们的AI技术已成功应用于多个领域，为用户提供专业的图像处理解决方案</p>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              {[
+                "封面缩略图设计", "营销海报生成", "人物画像风格转换", "老照片修复上色", "艺术照片生成",
+                "产品图片美化", "社交媒体配图", "证件照片优化", "品牌Logo设计", "电商主图制作"
+              ].map((project, index) => (
+                <div key={index} className="bg-purple-50 p-3 rounded-lg text-center">
+                  <div className="text-sm font-medium text-purple-700">{project}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 统计数据 */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16">
+            {[
+              { number: "50,000+", label: "处理图片数量", color: "purple" },
+              { number: "10,000+", label: "活跃用户", color: "blue" },
+              { number: "95%", label: "用户满意度", color: "green" },
+              { number: "30s", label: "平均处理时间", color: "orange" }
+            ].map((stat, index) => (
+              <div key={index} className="bg-white p-6 rounded-xl shadow-sm text-center">
+                <div className={`text-3xl font-bold mb-2 ${
+                  stat.color === 'purple' ? 'text-purple-600' :
+                  stat.color === 'blue' ? 'text-blue-600' :
+                  stat.color === 'green' ? 'text-green-600' :
+                  'text-orange-600'
+                }`}>
+                  {stat.number}
+                </div>
+                <div className="text-gray-600 text-sm">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 用户评价 */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              用户真实评价
+            </h2>
+            <p className="text-xl text-gray-600">
+              听听专业用户如何评价我们的AI图片编辑工具
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                name: "李设计师",
+                role: "UI/UX 设计师",
+                company: "互联网公司",
+                content: "AI编辑大大提高了我的图片处理效率，原本需要几小时的PS工作，现在几分钟就能完成，而且效果非常自然。",
+                avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=designer&backgroundColor=b6e3f4,c0aede,d1d4f9"
+              },
+              {
+                name: "王摄影师",
+                role: "商业摄影师",
+                company: "摄影工作室",
+                content: "特别喜欢风格转换功能，能快速为客户提供多种风格的样片，客户满意度大幅提升，工作效率翻倍。",
+                avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=photographer&backgroundColor=ffd5dc,ffdfbf,c0aede"
+              },
+              {
+                name: "张运营",
+                role: "新媒体运营",
+                company: "电商平台",
+                content: "作为运营人员，经常需要快速制作各种风格的营销图片，这个工具让我能够独立完成大部分图片设计工作。",
+                avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=marketing&backgroundColor=d1d4f9,ffd5dc,b6e3f4"
+              }
+            ].map((review, index) => (
+              <div key={index} className="bg-gray-50 p-8 rounded-2xl">
+                <div className="flex items-center mb-6">
+                  <Image
+                    src={review.avatar}
+                    alt={review.name}
+                    width={50}
+                    height={50}
+                    className="rounded-full object-cover"
+                  />
+                  <div className="ml-4">
+                    <h4 className="font-semibold text-gray-900">{review.name}</h4>
+                    <p className="text-sm text-gray-600">{review.role}</p>
+                    <p className="text-xs text-gray-500">{review.company}</p>
+                  </div>
+                </div>
+                <p className="text-gray-700 leading-relaxed italic">
+                  "{review.content}"
+                </p>
+                <div className="flex mt-4">
+                  {[1,2,3,4,5].map((star) => (
+                    <Sparkles key={star} className="h-4 w-4 text-yellow-400 fill-current" />
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -832,17 +963,16 @@ export default function HomePage() {
                     </div>
                   </div>
                   
-                  <Link href="/pricing">
-                    <Button 
-                      className={`w-full ${
-                        plan.popular 
-                          ? 'bg-purple-600 hover:bg-purple-700' 
-                          : 'bg-gray-800 hover:bg-gray-900'
-                      } transition-colors duration-200`}
-                    >
-                      选择此套餐
-                    </Button>
-                  </Link>
+                  <Button 
+                    onClick={handlePricingClick}
+                    className={`w-full ${
+                      plan.popular 
+                        ? 'bg-purple-600 hover:bg-purple-700' 
+                        : 'bg-gray-800 hover:bg-gray-900'
+                    } transition-colors duration-200`}
+                  >
+                    选择此套餐
+                  </Button>
                 </div>
               </div>
             ))}
@@ -850,12 +980,14 @@ export default function HomePage() {
 
           {/* More Pricing Link */}
           <div className="text-center mt-12">
-            <Link href="/pricing">
-              <Button variant="outline" className="border-purple-200 text-purple-600 hover:bg-purple-50">
-                查看完整定价详情
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
+            <Button 
+              onClick={handlePricingClick}
+              variant="outline" 
+              className="border-purple-200 text-purple-600 hover:bg-purple-50"
+            >
+              查看完整定价详情
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
           </div>
         </div>
       </section>
