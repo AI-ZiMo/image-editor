@@ -23,7 +23,7 @@ export function PaymentResultModal({
   const [status, setStatus] = useState<PaymentStatus>('pending')
   const [creditsAmount, setCreditsAmount] = useState<number>(0)
   const [amount, setAmount] = useState<number>(0)
-  const [remainingTime, setRemainingTime] = useState(30)
+  const [remainingTime, setRemainingTime] = useState(60)
   const [isPolling, setIsPolling] = useState(false)
   
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
@@ -80,7 +80,7 @@ export function PaymentResultModal({
     if (isOpen && outTradeNo && !isPolling) {
       setIsPolling(true)
       setStatus('pending')
-      setRemainingTime(30)
+      setRemainingTime(60)
 
       // 立即检查一次
       checkPaymentStatus()
@@ -88,11 +88,11 @@ export function PaymentResultModal({
       // 每2秒检查一次支付状态
       intervalRef.current = setInterval(checkPaymentStatus, 2000)
 
-      // 30秒后超时
+      // 1分钟后超时
       timeoutRef.current = setTimeout(() => {
         setStatus('timeout')
         clearTimers()
-      }, 30000)
+      }, 60000)
 
       // 倒计时
       const countdownInterval = setInterval(() => {

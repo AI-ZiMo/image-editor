@@ -4,12 +4,12 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Navbar } from "@/components/navbar"
-import { Sparkles, Check, Star, CreditCard, Smartphone } from "lucide-react"
+import { Sparkles, Check, Star, Smartphone } from "lucide-react"
 import Link from "next/link"
 
 export default function PricingPage() {
   const [selectedPlan, setSelectedPlan] = useState<typeof pricingPlans[0] | null>(null)
-  const [paymentMethod, setPaymentMethod] = useState<'alipay' | 'wxpay'>('alipay')
+  const [paymentMethod, setPaymentMethod] = useState<'wxpay'>('wxpay')
   const [isLoading, setIsLoading] = useState(false)
 
   const pricingPlans = [
@@ -228,37 +228,14 @@ export default function PricingPage() {
                   </div>
                 </div>
 
-                {/* 支付方式选择 */}
+                {/* 支付方式 */}
                 <div>
-                  <h3 className="font-medium mb-3">选择支付方式</h3>
-                  <div className="space-y-2">
-                    <div
-                      className={`flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all ${
-                        paymentMethod === 'alipay'
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-blue-300'
-                      }`}
-                      onClick={() => setPaymentMethod('alipay')}
-                    >
-                      <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center mr-3">
-                        <CreditCard className="h-4 w-4 text-white" />
-                      </div>
-                      <span className="font-medium">支付宝</span>
+                  <h3 className="font-medium mb-3">支付方式</h3>
+                  <div className="flex items-center p-3 border-2 border-green-500 bg-green-50 rounded-lg">
+                    <div className="w-8 h-8 bg-green-600 rounded flex items-center justify-center mr-3">
+                      <Smartphone className="h-4 w-4 text-white" />
                     </div>
-                    
-                    <div
-                      className={`flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all ${
-                        paymentMethod === 'wxpay'
-                          ? 'border-green-500 bg-green-50'
-                          : 'border-gray-200 hover:border-green-300'
-                      }`}
-                      onClick={() => setPaymentMethod('wxpay')}
-                    >
-                      <div className="w-8 h-8 bg-green-600 rounded flex items-center justify-center mr-3">
-                        <Smartphone className="h-4 w-4 text-white" />
-                      </div>
-                      <span className="font-medium">微信支付</span>
-                    </div>
+                    <span className="font-medium">微信支付</span>
                   </div>
                 </div>
 
