@@ -104,14 +104,20 @@ export default function ImageEditor() {
   // 获取用户积分
   useEffect(() => {
     const fetchUserCredits = async () => {
+      console.log('=== 前端获取用户积分 ===')
       try {
         const response = await fetch('/api/user-credits')
+        console.log('积分API响应状态:', response.status)
         if (response.ok) {
           const data = await response.json()
+          console.log('积分API返回数据:', data)
           setUserCredits(data.credits)
+          console.log('积分状态更新为:', data.credits)
+        } else {
+          console.error('积分API响应失败:', response.status, response.statusText)
         }
       } catch (error) {
-        console.error('Error fetching user credits:', error)
+        console.error('获取用户积分时发生错误:', error)
       }
     }
     
@@ -231,6 +237,10 @@ export default function ImageEditor() {
   const editImageWithReplicate = async (prompt: string, style?: string) => {
     if (imageVersions.length === 0) return
 
+    console.log('=== 前端开始AI编辑 ===')
+    console.log('当前积分状态:', userCredits)
+    console.log('编辑参数:', { prompt: prompt?.substring(0, 50), style })
+
     // Get the latest image to use as input (either original or last generated)
     const latestImage = imageVersions[imageVersions.length - 1]
     const inputImageUrl = latestImage.replicateFileUrl || latestImage.url
@@ -249,6 +259,13 @@ export default function ImageEditor() {
         : prompt
 
       // Start image editing
+      console.log('=== 发送编辑请求到后端 ===')
+      console.log('请求参数:', {
+        inputImage: inputImageUrl?.substring(0, 100) + '...',
+        prompt: finalPrompt,
+        aspectRatio: selectedAspectRatio === "match" ? "match_input_image" : selectedAspectRatio,
+      })
+      
       const editResponse = await fetch('/api/edit-image', {
         method: 'POST',
         headers: {
@@ -261,7 +278,9 @@ export default function ImageEditor() {
         }),
       })
 
+      console.log('编辑API响应状态:', editResponse.status)
       const editResult = await editResponse.json()
+      console.log('编辑API响应结果:', editResult)
 
       if (!editResult.success) {
         console.error('Edit failed:', editResult.error)
@@ -395,14 +414,20 @@ export default function ImageEditor() {
                setImageVersions((prev) => [...prev, newVersion])
 
                // Refresh user credits after successful generation
+               console.log('=== 生成成功，刷新积分 ===')
                try {
                  const response = await fetch('/api/user-credits')
+                 console.log('积分刷新API响应状态:', response.status)
                  if (response.ok) {
                    const data = await response.json()
+                   console.log('刷新后的积分数据:', data)
+                   console.log('积分从', userCredits, '更新为', data.credits)
                    setUserCredits(data.credits)
+                 } else {
+                   console.error('积分刷新API失败:', response.status, response.statusText)
                  }
                } catch (error) {
-                 console.error('Error refreshing user credits:', error)
+                 console.error('积分刷新发生错误:', error)
                }
 
                setCurrentPrompt("")
@@ -815,6 +840,7 @@ export default function ImageEditor() {
                         background: 'linear-gradient(to right, #7c3aed, #6d28d9)',
                         color: 'white'
                       }}
+                      onClick={() => console.log('当前积分状态点击:', userCredits)}
                     >
                       <Sparkles className="h-4 w-4 flex-shrink-0" style={{ color: 'white' }} />
                       <span className="font-bold text-lg whitespace-nowrap" style={{ color: 'white' }}>{userCredits}</span>

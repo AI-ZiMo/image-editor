@@ -25,7 +25,7 @@ BEGIN
   
   RETURN v_project_id;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 智能删除图片的函数（基于项目）
 CREATE OR REPLACE FUNCTION smart_delete_image(
@@ -78,7 +78,7 @@ BEGIN
     WHERE id = ANY(v_child_ids) AND user_id = p_user_id;
   END IF;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 获取用户所有作品列表
 CREATE OR REPLACE FUNCTION get_user_projects(p_user_id UUID)
@@ -131,7 +131,7 @@ BEGIN
   LEFT JOIN latest_images li ON ps.project_id = li.project_id
   ORDER BY ps.updated_at DESC;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 获取特定项目的活跃图片链
 CREATE OR REPLACE FUNCTION get_project_image_chain(
@@ -232,7 +232,7 @@ BEGIN
   
   RETURN v_new_image_id;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 重命名项目
 CREATE OR REPLACE FUNCTION rename_project(
@@ -262,7 +262,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- 扣除用户积分的函数（保持不变）
+-- 扣除用户积分的函数（SECURITY DEFINER权限修复）
 CREATE OR REPLACE FUNCTION deduct_user_credits(p_user_id UUID, p_amount INTEGER DEFAULT 1)
 RETURNS BOOLEAN AS $$
 DECLARE
@@ -283,9 +283,13 @@ BEGIN
   
   RETURN TRUE;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 增加用户积分的函数（保持不变）
+-- 确保函数有正确的权限
+GRANT EXECUTE ON FUNCTION deduct_user_credits(UUID, INTEGER) TO authenticated;
+GRANT EXECUTE ON FUNCTION deduct_user_credits(UUID, INTEGER) TO service_role;
+
+-- 增加用户积分的函数（SECURITY DEFINER权限修复）
 CREATE OR REPLACE FUNCTION add_user_credits(p_user_id UUID, p_amount INTEGER)
 RETURNS VOID AS $$
 BEGIN
@@ -296,4 +300,33 @@ BEGIN
     credits = ai_images_creator_credits.credits + p_amount,
     updated_at = NOW();
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 确保函数有正确的权限
+GRANT EXECUTE ON FUNCTION add_user_credits(UUID, INTEGER) TO authenticated;
+GRANT EXECUTE ON FUNCTION add_user_credits(UUID, INTEGER) TO service_role;
+
+-- 为所有其他函数授予权限
+GRANT EXECUTE ON FUNCTION create_new_project(UUID, TEXT, TEXT, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION create_new_project(UUID, TEXT, TEXT, TEXT) TO service_role;
+
+GRANT EXECUTE ON FUNCTION smart_delete_image(UUID, UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION smart_delete_image(UUID, UUID) TO service_role;
+
+GRANT EXECUTE ON FUNCTION get_user_projects(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION get_user_projects(UUID) TO service_role;
+
+GRANT EXECUTE ON FUNCTION get_project_image_chain(UUID, UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION get_project_image_chain(UUID, UUID) TO service_role;
+
+GRANT EXECUTE ON FUNCTION get_project_latest_image(UUID, UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION get_project_latest_image(UUID, UUID) TO service_role;
+
+GRANT EXECUTE ON FUNCTION add_generated_image(UUID, UUID, UUID, TEXT, TEXT, TEXT, TEXT, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION add_generated_image(UUID, UUID, UUID, TEXT, TEXT, TEXT, TEXT, TEXT) TO service_role;
+
+GRANT EXECUTE ON FUNCTION rename_project(UUID, UUID, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION rename_project(UUID, UUID, TEXT) TO service_role;
+
+GRANT EXECUTE ON FUNCTION delete_project(UUID, UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION delete_project(UUID, UUID) TO service_role;

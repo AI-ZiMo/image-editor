@@ -51,6 +51,12 @@
    - ✅ 改进了数组长度验证
    - ✅ 添加了更新时间戳
 
+4. **数据库函数权限修复** (v2024.12.08):
+   - ✅ 所有函数添加了 `SECURITY DEFINER` 权限
+   - ✅ 修复了 `deduct_user_credits()` 和 `add_user_credits()` 权限问题
+   - ✅ 添加了完整的 `GRANT EXECUTE` 权限设置
+   - ✅ 确保 service_role 和 authenticated 角色都可以调用函数
+
 ### ⚠️ 部署注意事项
 
 1. **函数依赖关系**: `03_functions.sql` 依赖于前两个表的存在，必须按顺序执行
@@ -102,6 +108,8 @@
 1. **权限错误**: 检查 RLS 策略和用户认证
 2. **约束违反**: 确保原图的 `project_id = id`
 3. **触发器失败**: 检查 `auth.users` 表存在
+4. **RPC函数失败**: 确保函数有 `SECURITY DEFINER` 权限
+5. **积分扣除问题**: 检查 service_role 权限配置
 
 ### 调试查询
 ```sql
@@ -113,4 +121,15 @@ SELECT * FROM get_user_projects('your-user-id');
 
 -- 检查特定项目的图片链
 SELECT * FROM get_project_image_chain('your-user-id', 'project-id');
+
+-- 测试积分扣除函数
+SELECT deduct_user_credits('your-user-id', 1);
+
+-- 检查函数权限
+SELECT 
+    p.proname as function_name,
+    p.proacl as permissions,
+    p.prosecdef as security_definer
+FROM pg_proc p
+WHERE p.proname IN ('deduct_user_credits', 'add_user_credits');
 ```
