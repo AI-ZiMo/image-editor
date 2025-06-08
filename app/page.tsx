@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Navbar } from "@/components/navbar"
-import { Sparkles, Wand2, Image as ImageIcon, Palette, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react"
+import { Sparkles, Wand2, Image as ImageIcon, Palette, ArrowRight, ChevronLeft, ChevronRight, X } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { useState, useEffect } from "react"
@@ -31,6 +31,11 @@ export default function HomePage() {
       before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E5%8E%9F%E5%9B%BE%20(2).jpg",
       after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E7%94%9F%E6%88%90%E5%9B%BE%E7%89%871%20(1).jpg",
       prompt: "在背景中加入 樱花飞舞"
+    },
+    {
+      before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E5%8E%9F%E5%9B%BE%20(4).jpg",
+      after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E7%94%9F%E6%88%90%E5%9B%BE%E7%89%871%20(3).jpg",
+      prompt: "让图片更加精装修一点"
     }
   ]
 
@@ -53,10 +58,27 @@ export default function HomePage() {
       after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E7%94%9F%E6%88%90%E5%9B%BE%E7%89%871%20(2).jpg",
       style: "水彩画风格",
       tag: "艺术"
+    },
+    {
+      before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E4%B8%8B%E8%BD%BD%20(3).jpeg",
+      after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E7%94%9F%E6%88%90%E5%9B%BE%E7%89%871%20(4).jpg",
+      style: "老照片上色",
+      tag: "修复"
+    },
+    {
+      before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/imagesSnipaste_2025-06-08_17-08-56.jpg",
+      after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E7%94%9F%E6%88%90%E5%9B%BE%E7%89%871%20(6).jpg",
+      style: "贴纸风格",
+      tag: "创意"
     }
   ]
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedComparison, setSelectedComparison] = useState<{
+    type: 'prompt' | 'style',
+    data: any
+  } | null>(null)
 
   // 自动轮播
   useEffect(() => {
@@ -73,6 +95,18 @@ export default function HomePage() {
 
   const prevImage = () => {
     setCurrentImageIndex((prev) => (prev - 1 + imageComparisons.length) % imageComparisons.length)
+  }
+
+  // 打开全屏模态框
+  const openModal = (type: 'prompt' | 'style', data: any) => {
+    setSelectedComparison({ type, data })
+    setIsModalOpen(true)
+  }
+
+  // 关闭全屏模态框
+  const closeModal = () => {
+    setIsModalOpen(false)
+    setSelectedComparison(null)
   }
 
   const features = [
@@ -305,6 +339,7 @@ export default function HomePage() {
                                 width: '400px',
                                 height: '320px'
                               }}
+                              onClick={() => openModal('prompt', comparison)}
                             >
                               <div className="p-4 h-full flex flex-col">
                                 {/* 前后对比图片 */}
@@ -358,6 +393,7 @@ export default function HomePage() {
                                 width: '380px',
                                 height: '320px'
                               }}
+                              onClick={() => openModal('style', styleComparison)}
                             >
                               <div className="p-4 h-full flex flex-col">
                                 {/* 风格对比图片 */}
@@ -534,6 +570,147 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+
+      {/* 全屏模态框 */}
+      {isModalOpen && selectedComparison && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4"
+          onClick={closeModal}
+        >
+          <div 
+            className="relative max-w-6xl max-h-[90vh] bg-white rounded-2xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 关闭按钮 */}
+            <button
+              onClick={closeModal}
+              className="absolute top-4 right-4 z-10 bg-white/80 hover:bg-white rounded-full p-2 transition-all duration-200"
+            >
+              <X className="h-6 w-6 text-gray-600" />
+            </button>
+
+            <div className="p-8">
+              {selectedComparison.type === 'prompt' ? (
+                // 提示词编辑全屏展示
+                <div className="space-y-6">
+                  <h3 className="text-2xl font-bold text-center text-purple-700">
+                    AI提示词编辑
+                  </h3>
+                  
+                  <div className="flex gap-8 items-center">
+                    {/* 原图 */}
+                    <div className="flex-1">
+                      <div className="relative">
+                        <Image
+                          src={selectedComparison.data.before}
+                          alt="编辑前"
+                          width={500}
+                          height={600}
+                          className="w-full max-h-[500px] object-contain rounded-xl border border-gray-200"
+                        />
+                        <div className="absolute top-4 left-4 bg-gray-800 text-white px-4 py-2 rounded-full font-medium">
+                          编辑前
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 箭头 */}
+                    <div className="flex justify-center">
+                      <div className="bg-purple-600 text-white p-4 rounded-full">
+                        <ArrowRight className="h-8 w-8" />
+                      </div>
+                    </div>
+
+                    {/* 编辑后 */}
+                    <div className="flex-1">
+                      <div className="relative">
+                        <Image
+                          src={selectedComparison.data.after}
+                          alt="编辑后"
+                          width={500}
+                          height={600}
+                          className="w-full max-h-[500px] object-contain rounded-xl border border-gray-200"
+                        />
+                        <div className="absolute top-4 left-4 bg-purple-600 text-white px-4 py-2 rounded-full font-medium">
+                          AI编辑后
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 提示词 */}
+                  <div className="bg-purple-50 border border-purple-200 rounded-xl p-6 text-center">
+                    <div className="flex items-center justify-center space-x-3 text-purple-700">
+                      <Wand2 className="h-6 w-6" />
+                      <span className="text-xl font-semibold">
+                        提示词："{selectedComparison.data.prompt}"
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                // 风格转换全屏展示
+                <div className="space-y-6">
+                  <h3 className="text-2xl font-bold text-center text-blue-700">
+                    AI风格转换
+                  </h3>
+                  
+                  <div className="flex gap-8 items-center">
+                    {/* 原图 */}
+                    <div className="flex-1">
+                      <div className="relative">
+                        <Image
+                          src={selectedComparison.data.before}
+                          alt="原图"
+                          width={500}
+                          height={600}
+                          className="w-full max-h-[500px] object-contain rounded-xl border border-gray-200"
+                        />
+                        <div className="absolute top-4 left-4 bg-gray-800 text-white px-4 py-2 rounded-full font-medium">
+                          原图
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 箭头 */}
+                    <div className="flex justify-center">
+                      <div className="bg-blue-600 text-white p-4 rounded-full">
+                        <ArrowRight className="h-8 w-8" />
+                      </div>
+                    </div>
+
+                    {/* 风格转换后 */}
+                    <div className="flex-1">
+                      <div className="relative">
+                        <Image
+                          src={selectedComparison.data.after}
+                          alt="风格转换后"
+                          width={500}
+                          height={600}
+                          className="w-full max-h-[500px] object-contain rounded-xl border border-gray-200"
+                        />
+                        <div className="absolute top-4 left-4 bg-blue-600 text-white px-4 py-2 rounded-full font-medium">
+                          {selectedComparison.data.tag}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 风格标题 */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center">
+                    <div className="flex items-center justify-center space-x-3 text-blue-700">
+                      <Palette className="h-6 w-6" />
+                      <span className="text-xl font-semibold">
+                        {selectedComparison.data.style}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
