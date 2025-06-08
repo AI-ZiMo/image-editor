@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -16,6 +16,7 @@ import { toast } from "sonner"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Navbar } from "@/components/navbar"
 import { ImageModal } from "@/components/image-modal"
+import { PaymentResultModal } from "@/components/payment-result-modal"
 import { createClient } from "@/lib/supabase/client"
 
 interface ImageVersion {
@@ -64,6 +65,7 @@ const quickPrompts = [
 
 export default function ImageEditor() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [imageVersions, setImageVersions] = useState<ImageVersion[]>([])
   const [currentPrompt, setCurrentPrompt] = useState("")
   const [isProcessing, setIsProcessing] = useState(false)
@@ -81,6 +83,8 @@ export default function ImageEditor() {
   const [userCredits, setUserCredits] = useState<number>(0)
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null)
   const [insufficientCreditsOpen, setInsufficientCreditsOpen] = useState(false)
+  const [paymentResultOpen, setPaymentResultOpen] = useState(false)
+  const [paymentOutTradeNo, setPaymentOutTradeNo] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // 动态提示内容
@@ -124,6 +128,24 @@ export default function ImageEditor() {
     
     fetchUserCredits()
   }, [])
+
+  // 检查支付结果
+  useEffect(() => {
+    const paymentSuccess = searchParams.get('payment_success')
+    const outTradeNo = searchParams.get('out_trade_no')
+    
+    if (paymentSuccess === '1' && outTradeNo) {
+      console.log('检测到支付回调，订单号:', outTradeNo)
+      setPaymentOutTradeNo(outTradeNo)
+      setPaymentResultOpen(true)
+      
+      // 清理URL参数
+      const newUrl = new URL(window.location.href)
+      newUrl.searchParams.delete('payment_success')
+      newUrl.searchParams.delete('out_trade_no')
+      window.history.replaceState({}, '', newUrl.toString())
+    }
+  }, [searchParams])
 
   // 认证检查已移至服务器端layout.tsx，此处不再需要
 
@@ -1114,6 +1136,21 @@ export default function ImageEditor() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* 支付结果验证弹框 */}
+      <PaymentResultModal
+        isOpen={paymentResultOpen}
+        outTradeNo={paymentOutTradeNo}
+        onClose={() => {
+          setPaymentResultOpen(false)
+          setPaymentOutTradeNo(null)
+        }}
+        onSuccess={(creditsAmount) => {
+          // 刷新用户积分
+          setUserCredits(prev => prev + creditsAmount)
+          toast.success(`充值成功！获得 ${creditsAmount} 积分`)
+        }}
+      />
     </>
   )
 }
