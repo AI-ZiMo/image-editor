@@ -32,9 +32,9 @@ export const pricingPlans: PricingPlan[] = [
   },
   {
     credits: 100,
-    price: 80,
+    price: 85,
     originalPrice: 120,
-    pricePerCredit: 0.8,
+    pricePerCredit: 0.85,
     label: "专业包",
     description: "适合深度使用",
     popular: false,
@@ -42,9 +42,9 @@ export const pricingPlans: PricingPlan[] = [
   },
   {
     credits: 200,
-    price: 140,
+    price: 160,
     originalPrice: 240,
-    pricePerCredit: 0.7,
+    pricePerCredit: 0.8,
     label: "企业包",
     description: "适合大量创作",
     popular: false,
