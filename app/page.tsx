@@ -1,18 +1,23 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Navbar } from "@/components/navbar"
-import { Sparkles, Wand2, Image as ImageIcon, Palette, ArrowRight, ChevronLeft, ChevronRight, X, ChevronDown, ChevronUp } from "lucide-react"
+import { Sparkles, Wand2, Image as ImageIcon, Palette, ArrowRight, ChevronLeft, ChevronRight, X, ChevronDown, ChevronUp, Loader2, Smartphone, Check } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { pricingPlans, type PricingPlan } from "@/lib/pricing-data"
+import { after } from "node:test"
+import { styleText } from "util"
 
 export default function HomePage() {
   const router = useRouter()
   const [currentUser, setCurrentUser] = useState<any>(null)
+  const [selectedPlan, setSelectedPlan] = useState<PricingPlan | null>(null)
+  const [isPaymentLoading, setIsPaymentLoading] = useState(false)
 
   // 检查用户登录状态
   useEffect(() => {
@@ -27,9 +32,9 @@ export default function HomePage() {
   // 图片对比数据
   const imageComparisons = [
     {
-      before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images1749188256096-om0mfropi8.jpg",
-      after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/imagesgenerated-1749188366245-omfod8nkvyl.png",
-      prompt: "给她带一顶 鲜花编织而成的 帽子"
+      before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E5%8E%9F%E5%9B%BE_bdc4fdd7-530d-4a52-b19b-17935895a245.jpg",
+      after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E5%9B%BE%E7%89%87%20(6).png",
+      prompt: "增加温暖的光线效果"
     },
     {
       before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/imagesDSC_0240.jpg",
@@ -84,6 +89,12 @@ export default function HomePage() {
       after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E7%94%9F%E6%88%90%E5%9B%BE%E7%89%871%20(6).jpg",
       style: "贴纸风格",
       tag: "创意"
+    },
+    {
+      before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E5%8E%9F%E5%9B%BE%20(6).jpg",
+      after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E7%94%9F%E6%88%90%E5%9B%BE%E7%89%871%20(7).jpg",
+      style: "吉卜力风格",
+      tag: '动漫'
     }
   ]
 
@@ -227,6 +238,53 @@ export default function HomePage() {
     handleDragEnd()
   }
 
+  // 处理套餐选择
+  const handlePlanSelect = (plan: PricingPlan) => {
+    if (!currentUser) {
+      // 未登录用户跳转到登录页面
+      router.push('/login')
+      return
+    }
+    setSelectedPlan(plan)
+  }
+
+  // 处理支付
+  const handlePurchase = async (plan: PricingPlan) => {
+    setIsPaymentLoading(true)
+    
+    try {
+      const response = await fetch('/api/payment/url', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          credits: plan.credits,
+          amount: plan.price,
+          paymentType: 'wxpay',
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('创建支付订单失败')
+      }
+
+      const data = await response.json()
+      
+      if (data.paymentUrl) {
+        // 跳转到支付页面
+        window.location.href = data.paymentUrl
+      } else {
+        throw new Error(data.error || '获取支付链接失败')
+      }
+    } catch (error) {
+      console.error('支付错误:', error)
+      alert('创建支付订单失败，请重试')
+    } finally {
+      setIsPaymentLoading(false)
+    }
+  }
+
   // 处理定价按钮点击
   const handlePricingClick = () => {
     if (currentUser) {
@@ -362,9 +420,10 @@ export default function HomePage() {
                       <Image
                         src={imageComparisons[currentImageIndex].before}
                         alt="转换前图片"
-                        width={180}
-                        height={320}
-                        className="w-44 h-80 object-cover rounded-lg transition-all duration-500"
+                        width={200}
+                        height={356}
+                        className="w-50 h-89 object-contain rounded-lg transition-all duration-500"
+                        style={{ aspectRatio: '9/16' }}
                       />
                       <div className="absolute top-5 left-5 bg-gray-800 text-white text-xs px-2 py-1 rounded-full">
                         转换前
@@ -385,9 +444,10 @@ export default function HomePage() {
                       <Image
                         src={imageComparisons[currentImageIndex].after}
                         alt="转换后图片"
-                        width={180}
-                        height={320}
-                        className="w-44 h-80 object-cover rounded-lg transition-all duration-500"
+                        width={200}
+                        height={356}
+                        className="w-50 h-89 object-contain rounded-lg transition-all duration-500"
+                        style={{ aspectRatio: '9/16' }}
                       />
                       <div className="absolute top-5 left-5 bg-purple-600 text-white text-xs px-2 py-1 rounded-full">
                         AI编辑后
@@ -514,14 +574,15 @@ export default function HomePage() {
                             >
                               <div className="p-4 h-full flex flex-col">
                                 {/* 前后对比图片 */}
-                                <div className="flex gap-3 flex-1">
+                                <div className="flex gap-3 h-64">
                                   <div className="flex-1 relative">
                                     <Image
                                       src={comparison.before}
                                       alt="编辑前"
                                       width={180}
-                                      height={200}
-                                      className="w-full h-full object-cover rounded-lg"
+                                      height={320}
+                                      className="w-full h-full object-contain rounded-lg"
+                                      style={{ aspectRatio: '9/16' }}
                                     />
                                     <div className="absolute top-2 left-2 bg-gray-800 text-white text-xs px-2 py-1 rounded-full">
                                       编辑前
@@ -537,8 +598,9 @@ export default function HomePage() {
                                       src={comparison.after}
                                       alt="编辑后"
                                       width={180}
-                                      height={200}
-                                      className="w-full h-full object-cover rounded-lg"
+                                      height={320}
+                                      className="w-full h-full object-contain rounded-lg"
+                                      style={{ aspectRatio: '9/16' }}
                                     />
                                     <div className="absolute top-2 left-2 bg-purple-600 text-white text-xs px-2 py-1 rounded-full">
                                       AI编辑后
@@ -546,7 +608,7 @@ export default function HomePage() {
                                   </div>
                                 </div>
                                 {/* 提示词 */}
-                                <div className="mt-3 bg-purple-50 rounded-lg p-2">
+                                <div className="bg-purple-50 rounded-lg p-2">
                                   <p className="text-xs text-purple-700 font-medium text-center">
                                     提示词编辑："{comparison.prompt}"
                                   </p>
@@ -568,14 +630,15 @@ export default function HomePage() {
                             >
                               <div className="p-4 h-full flex flex-col">
                                 {/* 风格对比图片 */}
-                                <div className="flex gap-3 flex-1">
+                                <div className="flex gap-3 h-64">
                                   <div className="flex-1 relative">
                                     <Image
                                       src={styleComparison.before}
                                       alt="原图"
                                       width={170}
-                                      height={200}
-                                      className="w-full h-full object-cover rounded-lg"
+                                      height={302}
+                                      className="w-full h-full object-contain rounded-lg"
+                                      style={{ aspectRatio: '9/16' }}
                                     />
                                     <div className="absolute top-2 left-2 bg-gray-800 text-white text-xs px-2 py-1 rounded-full">
                                       原图
@@ -591,8 +654,9 @@ export default function HomePage() {
                                       src={styleComparison.after}
                                       alt="风格转换后"
                                       width={170}
-                                      height={200}
-                                      className="w-full h-full object-cover rounded-lg"
+                                      height={302}
+                                      className="w-full h-full object-contain rounded-lg"
+                                      style={{ aspectRatio: '9/16' }}
                                     />
                                     <div className="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
                                       {styleComparison.tag}
@@ -600,7 +664,7 @@ export default function HomePage() {
                                   </div>
                                 </div>
                                 {/* 风格标题 */}
-                                <div className="mt-3 bg-blue-50 rounded-lg p-2">
+                                <div className="bg-blue-50 rounded-lg p-2">
                                   <p className="text-sm text-blue-700 font-semibold text-center">
                                     {styleComparison.style}
                                   </p>
@@ -863,48 +927,7 @@ export default function HomePage() {
 
           {/* Pricing Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              {
-                credits: 10,
-                price: 9.9,
-                originalPrice: 12,
-                pricePerCredit: 0.99,
-                label: "入门包",
-                description: "适合轻度使用",
-                popular: false,
-                badge: "热门"
-              },
-              {
-                credits: 50,
-                price: 39.9,
-                originalPrice: 60,
-                pricePerCredit: 0.8,
-                label: "进阶包",
-                description: "适合日常创作",
-                popular: true,
-                badge: "推荐"
-              },
-              {
-                credits: 100,
-                price: 69.9,
-                originalPrice: 120,
-                pricePerCredit: 0.7,
-                label: "专业包",
-                description: "适合深度使用",
-                popular: false,
-                badge: "超值"
-              },
-              {
-                credits: 200,
-                price: 129.9,
-                originalPrice: 240,
-                pricePerCredit: 0.65,
-                label: "企业包",
-                description: "适合大量创作",
-                popular: false,
-                badge: "最划算"
-              },
-            ].map((plan) => (
+            {pricingPlans.map((plan) => (
               <div 
                 key={plan.credits} 
                 className={`relative border-2 rounded-2xl p-6 ${
@@ -964,7 +987,7 @@ export default function HomePage() {
                   </div>
                   
                   <Button 
-                    onClick={handlePricingClick}
+                    onClick={() => handlePlanSelect(plan)}
                     className={`w-full ${
                       plan.popular 
                         ? 'bg-purple-600 hover:bg-purple-700' 
@@ -1012,6 +1035,11 @@ export default function HomePage() {
           {/* FAQ Items */}
           <div className="space-y-4">
             {[
+              {
+                question: "可以试用吗？",
+                answer: "可以！每个新用户注册后都可以获得 2 次免费的 AI 图片编辑生成机会，让您充分体验我们的产品功能和效果。试用完毕后，如果满意我们的服务，可以选择合适的积分套餐继续使用。",
+                category: "试用体验"
+              },
               {
                 question: "网站是收费的吗？收费标准是什么？",
                 answer: "是的，我们的网站采用积分制收费模式。由于网站调用先进的图片编辑大模型（如 FLUX），每次图片处理都会产生算力消耗成本。为了确保网站长期稳定运营并提供优质服务，我们采用合理的收费标准。新用户注册即可获得免费体验积分，后续可根据需要购买积分套餐。",
@@ -1105,6 +1133,75 @@ export default function HomePage() {
             </div>
       </section>
 
+      {/* Payment Modal */}
+      {selectedPlan && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle className="text-xl text-center">
+                支付确认
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* 订单信息 */}
+              <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">套餐：</span>
+                  <span className="font-semibold">{selectedPlan.label}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">积分：</span>
+                  <span className="font-semibold">{selectedPlan.credits} 积分</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">金额：</span>
+                  <span className="font-semibold text-xl text-purple-600">
+                    ¥{selectedPlan.price}
+                  </span>
+                </div>
+              </div>
+
+              {/* 支付方式 */}
+              <div>
+                <h3 className="font-medium mb-3">支付方式</h3>
+                <div className="flex items-center p-3 border-2 border-green-500 bg-green-50 rounded-lg">
+                  <div className="w-8 h-8 bg-green-600 rounded flex items-center justify-center mr-3">
+                    <Smartphone className="h-4 w-4 text-white" />
+                  </div>
+                  <span className="font-medium">微信支付</span>
+                </div>
+              </div>
+
+              {/* 按钮 */}
+              <div className="flex space-x-3">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setSelectedPlan(null)}
+                  className="flex-1"
+                  disabled={isPaymentLoading}
+                >
+                  取消
+                </Button>
+                <Button 
+                  onClick={() => handlePurchase(selectedPlan)}
+                  disabled={isPaymentLoading}
+                  className="flex-1 bg-purple-600 hover:bg-purple-700"
+                >
+                  {isPaymentLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      创建订单中...
+                    </>
+                  ) : (
+                    '立即支付'
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1155,9 +1252,10 @@ export default function HomePage() {
                         <Image
                           src={selectedComparison.data.before}
                           alt="编辑前"
-                          width={500}
-                          height={600}
-                          className="w-full max-h-[500px] object-contain rounded-xl border border-gray-200"
+                          width={450}
+                          height={800}
+                          className="w-full max-h-[600px] object-contain rounded-xl border border-gray-200"
+                          style={{ aspectRatio: '9/16' }}
                         />
                         <div className="absolute top-4 left-4 bg-gray-800 text-white px-4 py-2 rounded-full font-medium">
                           编辑前
@@ -1178,9 +1276,10 @@ export default function HomePage() {
                         <Image
                           src={selectedComparison.data.after}
                           alt="编辑后"
-                          width={500}
-                          height={600}
-                          className="w-full max-h-[500px] object-contain rounded-xl border border-gray-200"
+                          width={450}
+                          height={800}
+                          className="w-full max-h-[600px] object-contain rounded-xl border border-gray-200"
+                          style={{ aspectRatio: '9/16' }}
                         />
                         <div className="absolute top-4 left-4 bg-purple-600 text-white px-4 py-2 rounded-full font-medium">
                           AI编辑后
@@ -1213,9 +1312,10 @@ export default function HomePage() {
                         <Image
                           src={selectedComparison.data.before}
                           alt="原图"
-                          width={500}
-                          height={600}
-                          className="w-full max-h-[500px] object-contain rounded-xl border border-gray-200"
+                          width={450}
+                          height={800}
+                          className="w-full max-h-[600px] object-contain rounded-xl border border-gray-200"
+                          style={{ aspectRatio: '9/16' }}
                         />
                         <div className="absolute top-4 left-4 bg-gray-800 text-white px-4 py-2 rounded-full font-medium">
                           原图
@@ -1236,9 +1336,10 @@ export default function HomePage() {
                         <Image
                           src={selectedComparison.data.after}
                           alt="风格转换后"
-                          width={500}
-                          height={600}
-                          className="w-full max-h-[500px] object-contain rounded-xl border border-gray-200"
+                          width={450}
+                          height={800}
+                          className="w-full max-h-[600px] object-contain rounded-xl border border-gray-200"
+                          style={{ aspectRatio: '9/16' }}
                         />
                         <div className="absolute top-4 left-4 bg-blue-600 text-white px-4 py-2 rounded-full font-medium">
                           {selectedComparison.data.tag}

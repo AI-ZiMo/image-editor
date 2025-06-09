@@ -686,6 +686,7 @@ export default function ImageEditor() {
                               src={version.url}
                               alt={version.isOriginal ? "原始图片" : `生成图片 ${index}`}
                               className="max-w-full max-h-full object-contain transition-transform group-hover:scale-105"
+                              style={{ imageOrientation: 'from-image' }}
                               onError={(e) => {
                                 console.error('Supabase image load error:', e)
                                 // 可以在这里设置一个默认图片
@@ -699,6 +700,7 @@ export default function ImageEditor() {
                               width={240}
                               height={240}
                               className="max-w-full max-h-full object-contain transition-transform group-hover:scale-105"
+                              style={{ imageOrientation: 'from-image' }}
                             />
                           )}
                           

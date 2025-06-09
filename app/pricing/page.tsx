@@ -6,56 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Navbar } from "@/components/navbar"
 import { Sparkles, Check, Star, Smartphone } from "lucide-react"
 import Link from "next/link"
+import { pricingPlans, type PricingPlan } from "@/lib/pricing-data"
 
 export default function PricingPage() {
-  const [selectedPlan, setSelectedPlan] = useState<typeof pricingPlans[0] | null>(null)
+  const [selectedPlan, setSelectedPlan] = useState<PricingPlan | null>(null)
   const [paymentMethod, setPaymentMethod] = useState<'wxpay'>('wxpay')
   const [isLoading, setIsLoading] = useState(false)
 
-  const pricingPlans = [
-    {
-      credits: 10,
-      price: 9.9,
-      originalPrice: 12,
-      pricePerCredit: 0.99,
-      label: "入门包",
-      description: "适合轻度使用",
-      popular: false,
-      badge: "热门"
-    },
-    {
-      credits: 50,
-      price: 39.9,
-      originalPrice: 60,
-      pricePerCredit: 0.8,
-      label: "进阶包",
-      description: "适合日常创作",
-      popular: true,
-      badge: "推荐"
-    },
-    {
-      credits: 100,
-      price: 69.9,
-      originalPrice: 120,
-      pricePerCredit: 0.7,
-      label: "专业包",
-      description: "适合深度使用",
-      popular: false,
-      badge: "超值"
-    },
-    {
-      credits: 200,
-      price: 129.9,
-      originalPrice: 240,
-      pricePerCredit: 0.65,
-      label: "企业包",
-      description: "适合大量创作",
-      popular: false,
-      badge: "最划算"
-    },
-  ]
-
-  const handlePurchase = async (plan: typeof pricingPlans[0]) => {
+  const handlePurchase = async (plan: PricingPlan) => {
     setIsLoading(true)
     
     try {
