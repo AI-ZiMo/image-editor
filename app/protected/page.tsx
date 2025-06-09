@@ -85,6 +85,7 @@ export default function ImageEditor() {
   const [insufficientCreditsOpen, setInsufficientCreditsOpen] = useState(false)
   const [paymentResultOpen, setPaymentResultOpen] = useState(false)
   const [paymentOutTradeNo, setPaymentOutTradeNo] = useState<string | null>(null)
+  const [isDragOver, setIsDragOver] = useState(false) // 拖拽状态
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // 动态提示内容
@@ -152,108 +153,7 @@ export default function ImageEditor() {
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
-      setIsUploading(true)
-      setUploadSuccess(false)
-      
-      try {
-        // Show local preview immediately
-        const reader = new FileReader()
-        reader.onload = (e) => {
-          const originalImage: ImageVersion = {
-            id: `original-${Date.now()}`,
-            url: e.target?.result as string,
-            isOriginal: true,
-          }
-          setImageVersions([originalImage])
-        }
-        reader.readAsDataURL(file)
-
-        // Upload to Replicate
-        const formData = new FormData()
-        formData.append('file', file)
-        
-        const uploadResponse = await fetch('/api/upload-image', {
-          method: 'POST',
-          body: formData,
-        })
-        
-        const uploadResult = await uploadResponse.json()
-        
-        if (uploadResult.success) {
-          // Save original image to history and create new project
-          try {
-            // Get current user
-            const supabase = createClient()
-            const { data: { user } } = await supabase.auth.getUser()
-            
-            if (!user) {
-              throw new Error('User not authenticated')
-            }
-            
-            const historyResponse = await fetch('/api/save-image-history', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                userId: user.id,
-                imageUrl: uploadResult.fileUrl,
-                storagePath: uploadResult.filePath,
-                isOriginal: true
-              }),
-            })
-            
-            const historyResult = await historyResponse.json()
-            if (historyResult.success) {
-              setCurrentProjectId(historyResult.projectId)
-              
-              // Update the original image with the real database ID
-              setImageVersions(prev => prev.map(img => 
-                img.isOriginal 
-                  ? { 
-                      ...img, 
-                      id: historyResult.projectId, // Use database UUID instead of temp ID
-                      url: uploadResult.fileUrl,
-                      replicateFileUrl: uploadResult.fileUrl,
-                      supabaseFilePath: uploadResult.filePath 
-                    }
-                  : img
-              ))
-            }
-          } catch (error) {
-            console.error('Error saving to history:', error)
-            
-            // Fallback: update with temp ID if database save fails
-            setImageVersions(prev => prev.map(img => 
-              img.isOriginal 
-                ? { 
-                    ...img, 
-                    url: uploadResult.fileUrl,
-                    replicateFileUrl: uploadResult.fileUrl,
-                    supabaseFilePath: uploadResult.filePath 
-                  }
-                : img
-            ))
-          }
-          
-          // 显示成功状态和toast
-          setUploadSuccess(true)
-          toast.success('图片上传成功！')
-          
-          // 2秒后隐藏成功状态
-          setTimeout(() => {
-            setUploadSuccess(false)
-          }, 2000)
-        } else {
-          console.error('Upload failed:', uploadResult.error)
-          toast.error('图片上传失败，请重试')
-        }
-      } catch (error) {
-        console.error('Upload error:', error)
-        toast.error('图片上传失败，请重试')
-      } finally {
-        setIsUploading(false)
-      }
+      await handleFileUpload(file)
     }
   }
 
@@ -639,6 +539,140 @@ export default function ImageEditor() {
     setCurrentPrompt(prev => prev ? `${prev}，${prompt}` : prompt)
   }
 
+  // 处理拖拽事件
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(false)
+  }
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(false)
+
+    const files = Array.from(e.dataTransfer.files)
+    const imageFile = files.find(file => file.type.startsWith('image/'))
+    
+    if (imageFile) {
+      await handleFileUpload(imageFile)
+    } else {
+      toast.error('请拖拽图片文件')
+    }
+  }
+
+  // 提取文件上传逻辑到单独的函数
+  const handleFileUpload = async (file: File) => {
+    setIsUploading(true)
+    setUploadSuccess(false)
+    
+    try {
+      // Show local preview immediately
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const originalImage: ImageVersion = {
+          id: `original-${Date.now()}`,
+          url: e.target?.result as string,
+          isOriginal: true,
+        }
+        setImageVersions([originalImage])
+      }
+      reader.readAsDataURL(file)
+
+      // Upload to Replicate
+      const formData = new FormData()
+      formData.append('file', file)
+      
+      const uploadResponse = await fetch('/api/upload-image', {
+        method: 'POST',
+        body: formData,
+      })
+      
+      const uploadResult = await uploadResponse.json()
+      
+      if (uploadResult.success) {
+        // Save original image to history and create new project
+        try {
+          // Get current user
+          const supabase = createClient()
+          const { data: { user } } = await supabase.auth.getUser()
+          
+          if (!user) {
+            throw new Error('User not authenticated')
+          }
+          
+          const historyResponse = await fetch('/api/save-image-history', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId: user.id,
+              imageUrl: uploadResult.fileUrl,
+              storagePath: uploadResult.filePath,
+              isOriginal: true
+            }),
+          })
+          
+          const historyResult = await historyResponse.json()
+          if (historyResult.success) {
+            setCurrentProjectId(historyResult.projectId)
+            
+            // Update the original image with the real database ID
+            setImageVersions(prev => prev.map(img => 
+              img.isOriginal 
+                ? { 
+                    ...img, 
+                    id: historyResult.projectId, // Use database UUID instead of temp ID
+                    url: uploadResult.fileUrl,
+                    replicateFileUrl: uploadResult.fileUrl,
+                    supabaseFilePath: uploadResult.filePath 
+                  }
+                : img
+            ))
+          }
+        } catch (error) {
+          console.error('Error saving to history:', error)
+          
+          // Fallback: update with temp ID if database save fails
+          setImageVersions(prev => prev.map(img => 
+            img.isOriginal 
+              ? { 
+                  ...img, 
+                  url: uploadResult.fileUrl,
+                  replicateFileUrl: uploadResult.fileUrl,
+                  supabaseFilePath: uploadResult.filePath 
+                }
+              : img
+          ))
+        }
+        
+        // 显示成功状态和toast
+        setUploadSuccess(true)
+        toast.success('图片上传成功！')
+        
+        // 2秒后隐藏成功状态
+        setTimeout(() => {
+          setUploadSuccess(false)
+        }, 2000)
+      } else {
+        console.error('Upload failed:', uploadResult.error)
+        toast.error('图片上传失败，请重试')
+      }
+    } catch (error) {
+      console.error('Upload error:', error)
+      toast.error('图片上传失败，请重试')
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
   const latestImage = imageVersions[imageVersions.length - 1]
 
   return (
@@ -662,13 +696,24 @@ export default function ImageEditor() {
                 {/* Upload Area or First Image */}
                 {imageVersions.length === 0 ? (
                   <div
-                    className="flex-shrink-0 w-64 h-64 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors"
+                    className={`flex-shrink-0 w-64 h-64 border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer transition-colors ${
+                      isDragOver 
+                        ? 'border-purple-500 bg-purple-50' 
+                        : 'border-gray-300 hover:bg-gray-50'
+                    }`}
                     onClick={() => fileInputRef.current?.click()}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
                   >
-                    <Upload className="h-12 w-12 text-gray-400 mb-4" />
-                    <div className="text-gray-500 text-center">
-                      <div className="font-medium">点击上传图片</div>
-                      <div className="text-sm mt-1">或拖拽图片到此处</div>
+                    <Upload className={`h-12 w-12 mb-4 ${isDragOver ? 'text-purple-500' : 'text-gray-400'}`} />
+                    <div className={`text-center ${isDragOver ? 'text-purple-600' : 'text-gray-500'}`}>
+                      <div className="font-medium">
+                        {isDragOver ? '释放以上传图片' : '点击上传图片'}
+                      </div>
+                      <div className="text-sm mt-1">
+                        {isDragOver ? '松开鼠标上传' : '或拖拽图片到此处'}
+                      </div>
                     </div>
                   </div>
                 ) : (
