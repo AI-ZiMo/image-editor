@@ -37,24 +37,9 @@ export default function HomePage() {
       prompt: "增加温暖的光线效果"
     },
     {
-      before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/imagesDSC_0240.jpg",
-      after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/imagesgenerated-1749225316442-lhn1244awbs.png",
-      prompt: "给她带一顶 鲜花编织而成的 圆环帽子"
-    },
-    {
-      before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E5%8E%9F%E5%9B%BE%20(1).jpg",
-      after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E7%94%9F%E6%88%90%E5%9B%BE%E7%89%871.jpg",
-      prompt: "给她带上眼镜"
-    },
-    {
-      before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E5%8E%9F%E5%9B%BE%20(2).jpg",
-      after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E7%94%9F%E6%88%90%E5%9B%BE%E7%89%871%20(1).jpg",
-      prompt: "在背景中加入 樱花飞舞"
-    },
-    {
-      before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E5%8E%9F%E5%9B%BE%20(4).jpg",
-      after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E7%94%9F%E6%88%90%E5%9B%BE%E7%89%871%20(3).jpg",
-      prompt: "让图片更加精装修一点"
+      before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/imagesIMG_E487C4EC4ADF-1.jpeg",
+      after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E7%94%9F%E6%88%90%E5%9B%BE%E7%89%871%20(8).jpg",
+      prompt: "给图片上色"
     }
   ]
 
