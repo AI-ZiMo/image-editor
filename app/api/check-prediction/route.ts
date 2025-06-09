@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { aiService } from '@/lib/ai-service'
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,26 +10,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Prediction ID required' }, { status: 400 })
     }
 
-    // Check prediction status
-    const statusResponse = await fetch(`https://api.replicate.com/v1/predictions/${predictionId}`, {
-      headers: {
-        'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`,
-      },
-    })
-
-    if (!statusResponse.ok) {
-      const error = await statusResponse.text()
-      console.error('Replicate status check error:', error)
+    // Check prediction status using AI service
+    const result = await aiService.checkPredictionStatus(predictionId)
+    
+    if (!result.success) {
+      console.error('AI status check error:', result.error)
       return NextResponse.json({ error: 'Failed to check prediction status' }, { status: 500 })
     }
-
-    const prediction = await statusResponse.json()
     
     return NextResponse.json({ 
       success: true, 
-      status: prediction.status,
-      output: prediction.output,
-      error: prediction.error 
+      status: result.status,
+      output: result.output,
+      error: result.error 
     })
     
   } catch (error) {

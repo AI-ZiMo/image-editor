@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient, createServiceRoleClient } from '@/lib/supabase/server'
+import { aiService } from '@/lib/ai-service'
 
 export async function POST(request: NextRequest) {
   let user: any = null
@@ -57,38 +58,26 @@ export async function POST(request: NextRequest) {
 
     console.log('积分充足，开始处理图像...')
 
-    // Create prediction using Replicate API
-    console.log('=== 开始调用Replicate API ===')
-    const predictionResponse = await fetch('https://api.replicate.com/v1/models/black-forest-labs/flux-kontext-max/predictions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        input: {
-          aspect_ratio: aspectRatio,
-          input_image: inputImage,
-          output_format: "png",
-          prompt: prompt,
-          safety_tolerance: 2
-        }
-      }),
+    // Create prediction using AI service (Replicate or Tuzi based on MODEL env var)
+    const currentModel = process.env.MODEL || 'replicate'
+    console.log(`=== 开始调用${currentModel === 'tuzi' ? '兔子AI' : 'Replicate'} API ===`)
+    
+    const aiResult = await aiService.editImage({
+      inputImage,
+      prompt,
+      aspectRatio
     })
 
-    console.log('Replicate API响应状态:', predictionResponse.status)
+    console.log(`${currentModel === 'tuzi' ? '兔子AI' : 'Replicate'} API响应:`, aiResult)
 
-    if (!predictionResponse.ok) {
-      const error = await predictionResponse.text()
-      console.error('Replicate prediction error:', error)
-      console.log('=== Replicate失败，无需退款（因为还未扣除积分） ===')
+    if (!aiResult.success) {
+      console.error(`${currentModel === 'tuzi' ? '兔子AI' : 'Replicate'} prediction error:`, aiResult.error)
+      console.log(`=== ${currentModel === 'tuzi' ? '兔子AI' : 'Replicate'}失败，无需退款（因为还未扣除积分） ===`)
       return NextResponse.json({ error: 'Failed to create prediction' }, { status: 500 })
     }
-
-    const prediction = await predictionResponse.json()
     
     // AI处理请求成功创建，现在扣除积分
-    console.log('=== Replicate请求成功创建，现在扣除积分 ===')
+    console.log(`=== ${currentModel === 'tuzi' ? '兔子AI' : 'Replicate'}请求成功创建，现在扣除积分 ===`)
     const { data: deductResult, error: deductError } = await serviceSupabase
       .rpc('deduct_user_credits', { 
         p_user_id: user.id, 
@@ -103,7 +92,7 @@ export async function POST(request: NextRequest) {
     
     if (deductError) {
       console.error('积分扣除失败:', deductError)
-      // 这里不返回错误，因为Replicate请求已经创建，继续处理
+      // 这里不返回错误，因为AI请求已经创建，继续处理
       console.log('警告：积分扣除失败，但继续处理请求')
     } else if (!deductResult) {
       console.error('积分扣除返回false')
@@ -128,12 +117,12 @@ export async function POST(request: NextRequest) {
     })
     
     console.log('=== AI图像编辑请求已提交并扣除积分 ===')
-    console.log('预测ID:', prediction.id)
+    console.log('预测ID:', aiResult.predictionId)
     
     return NextResponse.json({ 
       success: true, 
-      predictionId: prediction.id,
-      status: prediction.status,
+      predictionId: aiResult.predictionId,
+      status: aiResult.status,
       userId: user.id  // Include user ID for history saving
     })
     
