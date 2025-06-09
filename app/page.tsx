@@ -37,6 +37,11 @@ export default function HomePage() {
       prompt: "增加温暖的光线效果"
     },
     {
+      before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/imagesSnipaste_2025-06-09_17-06-07.jpg",
+      after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E7%94%9F%E6%88%90%E5%9B%BE%E7%89%871%20(13).jpg",
+      prompt: "只保留中心人物，去除背景中的路人，保证背景一致性"
+    },
+    {
       before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/imagesIMG_E487C4EC4ADF-1.jpeg",
       after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E7%94%9F%E6%88%90%E5%9B%BE%E7%89%871%20(8).jpg",
       prompt: "给图片上色"
@@ -57,10 +62,20 @@ export default function HomePage() {
       prompt: "将标志文字转变为闪烁的金属材质，漂浮在一片布满花朵的草地上"
     },
     {
-      before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/imagesSnipaste_2025-06-09_17-06-07.jpg",
-      after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E7%94%9F%E6%88%90%E5%9B%BE%E7%89%871%20(13).jpg",
-      prompt: "只保留中心人物，去除背景中的路人，保证背景一致性"
-    }
+      before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/imagesSnipaste_2025-06-09_17-14-00.jpg",
+      after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E7%94%9F%E6%88%90%E5%9B%BE%E7%89%871%20(14).jpg",
+      prompt: "躺在草地上面向天空"
+    },
+    {
+      before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/imagesSnipaste_2025-06-09_17-14-00.jpg",
+      after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E7%94%9F%E6%88%90%E5%9B%BE%E7%89%871%20(15).jpg",
+      prompt: "给她带上墨镜"
+    },
+    {
+      before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E7%94%9F%E6%88%90%E5%9B%BE%E7%89%871%20(15).jpg",
+      after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E7%94%9F%E6%88%90%E5%9B%BE%E7%89%872%20(1).jpg",
+      prompt: "汽车颜色变成红色"
+    },
   ]
 
   // 风格对比数据
@@ -103,7 +118,7 @@ export default function HomePage() {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImageIndex((prev) => (prev + 1) % imageComparisons.length)
-    }, 4000) // 每4秒切换一次
+    }, 3000) // 每3秒切换一次
 
     return () => clearInterval(interval)
   }, [imageComparisons.length])
@@ -797,10 +812,10 @@ export default function HomePage() {
           {/* 统计数据 */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16">
             {[
-              { number: "50,000+", label: "处理图片数量", color: "purple" },
-              { number: "10,000+", label: "活跃用户", color: "blue" },
-              { number: "95%", label: "用户满意度", color: "green" },
-              { number: "30s", label: "平均处理时间", color: "orange" }
+              { number: "5000+", label: "处理图片数量", color: "purple" },
+              { number: "1000+", label: "活跃用户", color: "blue" },
+              { number: "99%", label: "用户满意度", color: "green" },
+              { number: "15s", label: "平均处理时间", color: "orange" }
             ].map((stat, index) => (
               <div key={index} className="bg-white p-6 rounded-xl shadow-sm text-center">
                 <div className={`text-3xl font-bold mb-2 ${
