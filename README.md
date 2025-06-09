@@ -46,7 +46,7 @@
 
 - **前端**: Next.js 14, TypeScript, Tailwind CSS, Shadcn/ui
 - **后端**: Supabase (PostgreSQL + Auth + Storage)
-- **AI服务**: Replicate AI 模型
+- **AI服务**: 支持兔子AI (tu-zi.com) 和 Replicate AI 模型
 - **部署**: Vercel
 - **状态管理**: React Hooks
 - **图片处理**: Next.js Image 组件
@@ -77,10 +77,64 @@
    复制 `.env.example` 为 `.env.local` 并填入以下配置：
    
    ```env
+   # Supabase配置
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+   
+   # AI服务配置
+   # PROVIDER: 选择AI服务提供商 ("tuzi" 或 "replicate")
+   PROVIDER=tuzi
+   # MODEL: 选择具体模型 ("flux-kontext-pro" 或 "flux-kontext-max")
+   MODEL=flux-kontext-pro
+   
+   # Replicate配置 (当PROVIDER=replicate时需要)
    REPLICATE_API_TOKEN=your_replicate_api_token
+   
+   # 兔子AI配置 (当PROVIDER=tuzi时需要)
+   TUZI_API_KEY=your_tuzi_api_key
+   
+   # 支付配置 (可选)
+   ZPAY_PID=your_zpay_pid
+   ZPAY_KEY=your_zpay_key
+   
+   # 网站URL
+   NEXT_PUBLIC_SITE_URL=http://localhost:3000
    ```
+
+   ### 环境变量说明
+   
+   #### 必需配置
+   - `NEXT_PUBLIC_SUPABASE_URL`: Supabase项目URL
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Supabase匿名访问密钥
+   - `SUPABASE_SERVICE_ROLE_KEY`: Supabase服务角色密钥
+   - `PROVIDER`: AI服务提供商，可选值：
+     - `tuzi`: 使用兔子AI服务 (推荐，速度快)
+     - `replicate`: 使用Replicate AI服务
+   - `MODEL`: AI模型选择，可选值：
+     - `flux-kontext-pro`: 专业版模型，性能均衡
+     - `flux-kontext-max`: 最大版模型，效果更好但速度稍慢
+   
+   #### AI服务密钥 (根据PROVIDER选择)
+   - **使用兔子AI时需要**:
+     - `TUZI_API_KEY`: 兔子AI的API密钥
+   - **使用Replicate时需要**:
+     - `REPLICATE_API_TOKEN`: Replicate的API令牌
+   
+   #### 可选配置
+   - `ZPAY_PID`: 支付商户ID (如需集成支付功能)
+   - `ZPAY_KEY`: 支付密钥
+   - `NEXT_PUBLIC_SITE_URL`: 网站域名 (生产环境需要)
+   - `NODE_ENV`: 环境模式 (development/production)
+
+   ### AI服务对比
+   
+   | 特性 | 兔子AI (tu-zi.com) | Replicate |
+   |------|------------------|-----------|
+   | 速度 | 🚀 快速 (同步返回) | ⏳ 较慢 (异步轮询) |
+   | 稳定性 | ⭐⭐⭐⭐⭐ 高 | ⭐⭐⭐⭐ 中 |
+   | 成本 | 💰 较低 | 💰💰 较高 |
+   | 推荐场景 | 生产环境 | 开发测试 |
 
 4. **数据库设置**
    
@@ -93,14 +147,54 @@
 
    应用将运行在 [http://localhost:3000](http://localhost:3000)
 
+## AI服务切换
+
+### 快速切换AI服务提供商
+
+只需修改 `.env.local` 文件中的 `PROVIDER` 变量：
+
+```bash
+# 使用兔子AI (推荐)
+PROVIDER=tuzi
+MODEL=flux-kontext-pro
+
+# 或使用Replicate
+PROVIDER=replicate  
+MODEL=flux-kontext-max
+```
+
+### 切换AI模型
+
+在相同服务提供商下切换不同模型：
+
+```bash
+# 使用专业版模型 (速度更快)
+MODEL=flux-kontext-pro
+
+# 使用最大版模型 (效果更好)
+MODEL=flux-kontext-max
+```
+
+**注意**: 修改环境变量后需要重启开发服务器
+
 ## 部署
 
 ### Vercel 部署（推荐）
 
 1. Fork 此项目到您的 GitHub
 2. 在 [Vercel](https://vercel.com) 中导入项目
-3. 配置环境变量
+3. 配置环境变量 (参考上述环境配置章节)
+   - 在 Vercel 项目设置中添加所有必需的环境变量
+   - 确保 `NEXT_PUBLIC_SITE_URL` 设置为您的生产域名
 4. 部署完成
+
+### 生产环境配置注意事项
+
+- 确保所有 API 密钥都是有效的生产环境密钥
+- 建议在生产环境使用兔子AI (`PROVIDER=tuzi`) 以获得更好的性能
+- 设置正确的 `NEXT_PUBLIC_SITE_URL` 
+- 配置 Supabase 的生产环境数据库
+- 如需支付功能，配置相应的支付服务商密钥
 
 ### 其他平台
 

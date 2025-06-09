@@ -58,9 +58,11 @@ export async function POST(request: NextRequest) {
 
     console.log('积分充足，开始处理图像...')
 
-    // Create prediction using AI service (Replicate or Tuzi based on MODEL env var)
-    const currentModel = process.env.MODEL || 'replicate'
-    console.log(`=== 开始调用${currentModel === 'tuzi' ? '兔子AI' : 'Replicate'} API ===`)
+    // Create prediction using AI service (Replicate or Tuzi based on PROVIDER env var)
+    const currentProvider = process.env.PROVIDER || 'replicate'
+    const currentModel = process.env.MODEL || 'flux-kontext-max'
+    console.log(`=== 开始调用${currentProvider === 'tuzi' ? '兔子AI' : 'Replicate'} API ===`)
+    console.log(`使用模型: ${currentModel}`)
     
     const aiResult = await aiService.editImage({
       inputImage,
@@ -68,16 +70,16 @@ export async function POST(request: NextRequest) {
       aspectRatio
     })
 
-    console.log(`${currentModel === 'tuzi' ? '兔子AI' : 'Replicate'} API响应:`, aiResult)
+    console.log(`${currentProvider === 'tuzi' ? '兔子AI' : 'Replicate'} API响应:`, aiResult)
 
     if (!aiResult.success) {
-      console.error(`${currentModel === 'tuzi' ? '兔子AI' : 'Replicate'} prediction error:`, aiResult.error)
-      console.log(`=== ${currentModel === 'tuzi' ? '兔子AI' : 'Replicate'}失败，无需退款（因为还未扣除积分） ===`)
+      console.error(`${currentProvider === 'tuzi' ? '兔子AI' : 'Replicate'} prediction error:`, aiResult.error)
+      console.log(`=== ${currentProvider === 'tuzi' ? '兔子AI' : 'Replicate'}失败，无需退款（因为还未扣除积分） ===`)
       return NextResponse.json({ error: 'Failed to create prediction' }, { status: 500 })
     }
     
     // AI处理请求成功创建，现在扣除积分
-    console.log(`=== ${currentModel === 'tuzi' ? '兔子AI' : 'Replicate'}请求成功创建，现在扣除积分 ===`)
+    console.log(`=== ${currentProvider === 'tuzi' ? '兔子AI' : 'Replicate'}请求成功创建，现在扣除积分 ===`)
     const { data: deductResult, error: deductError } = await serviceSupabase
       .rpc('deduct_user_credits', { 
         p_user_id: user.id, 

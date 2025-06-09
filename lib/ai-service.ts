@@ -19,14 +19,16 @@ export interface AIEditRequest {
 }
 
 class AIService {
+  private provider: string
   private model: string
 
   constructor() {
-    this.model = process.env.MODEL || 'replicate'
+    this.provider = process.env.PROVIDER || 'replicate'
+    this.model = process.env.MODEL || 'flux-kontext-max'
   }
 
   async editImage(request: AIEditRequest): Promise<AIServiceResponse> {
-    if (this.model === 'tuzi') {
+    if (this.provider === 'tuzi') {
       return this.editImageWithTuzi(request)
     } else {
       return this.editImageWithReplicate(request)
@@ -34,7 +36,7 @@ class AIService {
   }
 
   async checkPredictionStatus(predictionId: string): Promise<AIServiceResponse> {
-    if (this.model === 'tuzi') {
+    if (this.provider === 'tuzi') {
       // 兔子AI是同步返回结果，不需要轮询
       return {
         success: true,
@@ -52,7 +54,7 @@ class AIService {
 
       // 构建兔子AI的请求参数
       const payloadData = {
-        model: "flux-kontext-pro",
+        model: this.model, // 使用环境变量中的模型
         prompt: `${inputImage} ${prompt}`,
         aspect_ratio: aspectRatio,
         output_format: "png",
@@ -133,7 +135,12 @@ class AIService {
     try {
       const { inputImage, prompt, aspectRatio = "match_input_image" } = request
 
-      const predictionResponse = await fetch('https://api.replicate.com/v1/models/black-forest-labs/flux-kontext-max/predictions', {
+      // 根据模型选择对应的Replicate模型路径
+      const modelPath = this.model === 'flux-kontext-pro' 
+        ? 'black-forest-labs/flux-kontext-pro/predictions'
+        : 'black-forest-labs/flux-kontext-max/predictions'
+
+      const predictionResponse = await fetch(`https://api.replicate.com/v1/models/${modelPath}`, {
         method: 'POST',
         headers: {
           'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`,
