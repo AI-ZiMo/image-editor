@@ -40,29 +40,31 @@ export default function HomePage() {
       before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/imagesIMG_E487C4EC4ADF-1.jpeg",
       after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E7%94%9F%E6%88%90%E5%9B%BE%E7%89%871%20(8).jpg",
       prompt: "给图片上色"
+    },
+    {
+      before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/imagesIMG_3D6CE39DEEC5-1.jpeg",
+      after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E7%94%9F%E6%88%90%E5%9B%BE%E7%89%871%20(9).jpg",
+      prompt: "将Fractal Haze 两个词 替换成 AI ZIMO"
+    },
+    {
+      before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/imagesIMG_57FA6F951C96-1.jpeg",
+      after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E7%94%9F%E6%88%90%E5%9B%BE%E7%89%871%20(11).jpg",
+      prompt: "去除水印，尽量保持背景自然不变"
+    },
+    {
+      before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/imagesIMG_9333F27C78FE-1.jpeg",
+      after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E5%8E%86%E5%8F%B2%E5%9B%BE%E7%89%87%20(1).jpg",
+      prompt: "将标志文字转变为闪烁的金属材质，漂浮在一片布满花朵的草地上"
+    },
+    {
+      before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/imagesSnipaste_2025-06-09_17-06-07.jpg",
+      after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E7%94%9F%E6%88%90%E5%9B%BE%E7%89%871%20(13).jpg",
+      prompt: "只保留中心人物，去除背景中的路人，保证背景一致性"
     }
   ]
 
   // 风格对比数据
   const styleComparisons = [
-    {
-      before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/imagesDSC_0476.jpg",
-      after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/imagesWechatIMG766.jpg",
-      style: "水彩画风格",
-      tag: "艺术"
-    },
-    {
-      before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E7%94%9F%E6%88%90%E5%9B%BE%E7%89%871%20(1).jpg",
-      after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E7%94%9F%E6%88%90%E5%9B%BE%E7%89%872.jpg",
-      style: "日式动漫风格",
-      tag: "动漫"
-    },
-    {
-      before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E5%8E%9F%E5%9B%BE%20(3).jpg",
-      after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E7%94%9F%E6%88%90%E5%9B%BE%E7%89%871%20(2).jpg",
-      style: "水彩画风格",
-      tag: "艺术"
-    },
     {
       before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E4%B8%8B%E8%BD%BD%20(3).jpeg",
       after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E7%94%9F%E6%88%90%E5%9B%BE%E7%89%871%20(4).jpg",
@@ -76,8 +78,8 @@ export default function HomePage() {
       tag: "创意"
     },
     {
-      before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E5%8E%9F%E5%9B%BE%20(6).jpg",
-      after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E7%94%9F%E6%88%90%E5%9B%BE%E7%89%871%20(7).jpg",
+      before: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/imagesIMG_80DB0820EEEA-1.jpeg",
+      after: "https://aibuilder.oss-cn-hangzhou.aliyuncs.com/images%E7%94%9F%E6%88%90%E5%9B%BE%E7%89%871%20(10).jpg",
       style: "吉卜力风格",
       tag: '动漫'
     }

@@ -41,6 +41,12 @@ const presetStyles = [
   { name: "黑白照片", value: "black and white photography", description: "经典黑白" },
 ]
 
+const presetFunctions = [
+  { name: "图片去水印", value: "去除水印，尽量保持背景自然不变", description: "移除水印" },
+  { name: "老照片上色", value: "colorize old photo, add natural colors to vintage black and white photo", description: "黑白上色" },
+  { name: "去除路人", value: "只保留中心人物，去除背景中的路人，保证背景的一致性。", description: "清除路人" },
+]
+
 const aspectRatios = [
   { name: "match_input_image", label: "匹配原图", value: "match", isDefault: true },
   { name: "1:1", label: "1:1", value: "1:1", description: "正方形" },
@@ -74,7 +80,7 @@ export default function ImageEditor() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0)
-  const [generationMode, setGenerationMode] = useState<"style" | "prompt">("prompt")
+  const [generationMode, setGenerationMode] = useState<"prompt" | "style" | "function">("prompt")
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [imageToDelete, setImageToDelete] = useState<number | null>(null)
   const [isUploading, setIsUploading] = useState(false)
@@ -472,6 +478,25 @@ export default function ImageEditor() {
   }
 
   const handleStartEditing = () => {
+    if (imageVersions.length === 0 || !selectedStyle) {
+      return
+    }
+    
+    // 先检查积分是否充足
+    if (userCredits < 1) {
+      console.log('积分不足，显示充值对话框')
+      setInsufficientCreditsOpen(true)
+      return
+    }
+    
+    editImageWithReplicate("", selectedStyle)
+  }
+
+  const handleFunctionClick = (functionValue: string) => {
+    setSelectedStyle(functionValue)
+  }
+
+  const handleStartFunction = () => {
     if (imageVersions.length === 0 || !selectedStyle) {
       return
     }
@@ -967,58 +992,15 @@ export default function ImageEditor() {
                   </Alert>
                 )}
 
-                <Tabs value={generationMode} onValueChange={(value) => setGenerationMode(value as "style" | "prompt")}>
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="style">预设风格</TabsTrigger>
+                <Tabs value={generationMode} onValueChange={(value) => {
+                  setGenerationMode(value as "prompt" | "style" | "function")
+                  setSelectedStyle(null) // 切换标签时重置选择
+                }}>
+                  <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="prompt">自定义提示词</TabsTrigger>
+                    <TabsTrigger value="style">预设风格</TabsTrigger>
+                    <TabsTrigger value="function">预设功能</TabsTrigger>
                   </TabsList>
-
-                  <TabsContent value="style" className="space-y-4">
-                    <div className="grid grid-cols-3 gap-2 justify-items-center">
-                      {presetStyles.map((style) => (
-                        <Button
-                          key={style.value}
-                          variant="outline"
-                          onClick={() => handleStyleClick(style.value)}
-                          disabled={isProcessing || isUploading || imageVersions.length === 0}
-                          className={`h-auto p-3 text-center ${
-                            selectedStyle === style.value && imageVersions.length > 0
-                              ? "border-purple-600 bg-purple-50"
-                              : ""
-                          }`}
-                        >
-                          <div>
-                            <div className="font-medium text-sm">{style.name}</div>
-                            <div className="text-xs text-gray-500 mt-1">{style.description}</div>
-                          </div>
-                        </Button>
-                      ))}
-                    </div>
-
-                    {/* 开始编辑按钮 */}
-                    <div className="space-y-2">
-                      <Button
-                        onClick={handleStartEditing}
-                        disabled={isProcessing || isUploading || imageVersions.length === 0 || !selectedStyle}
-                        className="w-full bg-purple-600 hover:bg-purple-700"
-                      >
-                        {isProcessing ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                            AI处理中...
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="w-4 h-4 mr-2" />
-                            开始编辑
-                          </>
-                        )}
-                      </Button>
-                      <div className="text-xs text-center text-gray-500">
-                        每次编辑消耗 <span className="text-purple-600 font-semibold">1 个积分</span>
-                      </div>
-                    </div>
-                  </TabsContent>
 
                   <TabsContent value="prompt" className="space-y-4">
                     <Textarea
@@ -1066,6 +1048,100 @@ export default function ImageEditor() {
                       </Button>
                       <div className="text-xs text-center text-gray-500">
                         每次编辑消耗 <span className="text-purple-600 font-semibold">1 个积分</span>
+                      </div>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="style" className="space-y-4">
+                    <div className="grid grid-cols-4 sm:grid-cols-5 lg:grid-cols-6 gap-2 justify-items-center">
+                      {presetStyles.map((style) => (
+                        <Button
+                          key={style.value}
+                          variant="outline"
+                          onClick={() => handleStyleClick(style.value)}
+                          disabled={isProcessing || isUploading || imageVersions.length === 0}
+                          className={`h-auto p-2 text-center ${
+                            selectedStyle === style.value && imageVersions.length > 0 && generationMode === "style"
+                              ? "border-purple-600 bg-purple-50"
+                              : ""
+                          }`}
+                        >
+                          <div>
+                            <div className="font-medium text-xs">{style.name}</div>
+                            <div className="text-xs text-gray-500 mt-0.5">{style.description}</div>
+                          </div>
+                        </Button>
+                      ))}
+                    </div>
+
+                    {/* 开始编辑按钮 */}
+                    <div className="space-y-2">
+                      <Button
+                        onClick={handleStartEditing}
+                        disabled={isProcessing || isUploading || imageVersions.length === 0 || !selectedStyle || generationMode !== "style"}
+                        className="w-full bg-purple-600 hover:bg-purple-700"
+                      >
+                        {isProcessing ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            AI处理中...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            开始编辑
+                          </>
+                        )}
+                      </Button>
+                      <div className="text-xs text-center text-gray-500">
+                        每次编辑消耗 <span className="text-purple-600 font-semibold">1 个积分</span>
+                      </div>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="function" className="space-y-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 justify-items-center">
+                      {presetFunctions.map((func) => (
+                        <Button
+                          key={func.value}
+                          variant="outline"
+                          onClick={() => handleFunctionClick(func.value)}
+                          disabled={isProcessing || isUploading || imageVersions.length === 0}
+                          className={`h-auto p-3 text-center ${
+                            selectedStyle === func.value && imageVersions.length > 0 && generationMode === "function"
+                              ? "border-purple-600 bg-purple-50"
+                              : ""
+                          }`}
+                        >
+                          <div>
+                            <div className="font-medium text-sm">{func.name}</div>
+                            <div className="text-xs text-gray-500 mt-1">{func.description}</div>
+                          </div>
+                        </Button>
+                      ))}
+                    </div>
+
+                    {/* 开始功能处理按钮 */}
+                    <div className="space-y-2">
+                      <Button
+                        onClick={handleStartFunction}
+                        disabled={isProcessing || isUploading || imageVersions.length === 0 || !selectedStyle || generationMode !== "function"}
+                        className="w-full bg-green-600 hover:bg-green-700"
+                      >
+                        {isProcessing ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            AI处理中...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            开始处理
+                          </>
+                        )}
+                      </Button>
+                      <div className="text-xs text-center text-gray-500">
+                        每次处理消耗 <span className="text-purple-600 font-semibold">1 个积分</span>
                       </div>
                     </div>
                   </TabsContent>
