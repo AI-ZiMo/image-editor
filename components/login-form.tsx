@@ -16,6 +16,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { Check } from "lucide-react";
 
 export function LoginForm({
   className,
@@ -25,6 +26,7 @@ export function LoginForm({
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -41,6 +43,10 @@ export function LoginForm({
       
       if (error) throw error;
       
+      // 设置成功状态
+      setIsLoading(false);
+      setIsSuccess(true);
+      
       // 显示成功提示
       toast.success('登录成功！正在跳转...', {
         duration: 2000,
@@ -50,15 +56,31 @@ export function LoginForm({
       setTimeout(() => {
         router.push("/protected");
         router.refresh(); // 刷新页面状态
-        // 不在这里结束加载状态，让页面跳转时保持加载状态
-      }, 1000);
+      }, 1500);
       
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "登录失败，请重试";
+      let errorMessage = "登录失败，请重试";
+      if (error instanceof Error) {
+        // 将常见的英文错误信息翻译为中文
+        switch (error.message) {
+          case "Invalid login credentials":
+            errorMessage = "邮箱或密码错误";
+            break;
+          case "Email not confirmed":
+            errorMessage = "邮箱尚未验证，请检查您的邮箱";
+            break;
+          case "Too many requests":
+            errorMessage = "请求过于频繁，请稍后再试";
+            break;
+          default:
+            errorMessage = "登录失败，请重试";
+        }
+      }
       setError(errorMessage);
       toast.error(errorMessage);
       // 只有在出错时才立即结束加载状态
       setIsLoading(false);
+      setIsSuccess(false);
     }
   };
 
@@ -104,8 +126,17 @@ export function LoginForm({
                 />
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
-              <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700" disabled={isLoading}>
-                {isLoading ? "登录中..." : "登录"}
+              <Button 
+                type="submit" 
+                className={`w-full ${isSuccess ? 'bg-green-600 hover:bg-green-600' : 'bg-purple-600 hover:bg-purple-700'}`} 
+                disabled={isLoading || isSuccess}
+              >
+                {isSuccess ? (
+                  <div className="flex items-center gap-2">
+                    <Check className="h-4 w-4" />
+                    登录成功
+                  </div>
+                ) : isLoading ? "登录中..." : "登录"}
               </Button>
             </div>
             <div className="mt-4 text-center text-sm">

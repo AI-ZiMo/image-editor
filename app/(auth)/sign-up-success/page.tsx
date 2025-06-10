@@ -25,7 +25,7 @@ export default function Page() {
                   </div>
                 </div>
                 <CardTitle className="text-2xl text-purple-600">
-                  注册成功！
+                  请查看邮箱，并点击确认链接 验证账户
               </CardTitle>
                 <CardDescription>请检查您的邮箱以确认账户</CardDescription>
             </CardHeader>
