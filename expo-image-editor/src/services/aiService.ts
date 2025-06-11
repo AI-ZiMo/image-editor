@@ -1,46 +1,21 @@
 import { supabase } from './supabase'
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://localhost:3000'
+// AI Service Configuration
+const AI_PROVIDER = process.env.EXPO_PUBLIC_AI_PROVIDER || 'tuzi'
+const AI_MODEL = process.env.EXPO_PUBLIC_AI_MODEL || 'flux-kontext-pro'
+const TUZI_API_KEY = process.env.EXPO_PUBLIC_TUZI_API_KEY
+const REPLICATE_API_TOKEN = process.env.EXPO_PUBLIC_REPLICATE_API_TOKEN
 
 // Log initialization info
 console.log('🚀 AI Service initialized with:', {
-  apiBaseUrl: API_BASE_URL,
-  hasEnvVar: !!process.env.EXPO_PUBLIC_API_BASE_URL,
+  provider: AI_PROVIDER,
+  model: AI_MODEL,
+  hasTuziKey: !!TUZI_API_KEY,
+  hasReplicateToken: !!REPLICATE_API_TOKEN,
   envKeys: Object.keys(process.env).filter(key => key.startsWith('EXPO_PUBLIC_'))
 })
 
-// 获取认证头的辅助函数 - Updated for mobile API compatibility
-const getAuthHeaders = async (): Promise<Record<string, string>> => {
-  console.log('🔑 Getting auth headers for mobile API...')
-  const { data: { session }, error } = await supabase.auth.getSession()
-  
-  if (error) {
-    console.error('❌ Auth session error:', error)
-  }
-  
-  console.log('👤 Session info:', {
-    hasSession: !!session,
-    hasAccessToken: !!session?.access_token,
-    userId: session?.user?.id,
-    tokenLength: session?.access_token?.length
-  })
-  
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  }
-  
-  if (session?.access_token) {
-    // For mobile apps, we need to send the token in a way the web API can understand
-    // We'll send both the Authorization header and set a cookie-like header
-    headers['Authorization'] = `Bearer ${session.access_token}`
-    headers['X-Supabase-Token'] = session.access_token
-    console.log('✅ Added mobile-compatible auth headers')
-  } else {
-    console.warn('⚠️ No access token available')
-  }
-  
-  return headers
-}
+// Direct Supabase operations - no more web API dependencies!
 
 export interface EditImageRequest {
   inputImage: string
@@ -67,62 +42,70 @@ export interface UploadImageResponse {
 export const aiService = {
   async uploadImage(imageUri: string): Promise<UploadImageResponse> {
     try {
-      console.log('📤 Starting image upload...')
+      console.log('📤 Starting direct Supabase image upload...')
       console.log('🖼️ Image URI:', imageUri)
-      console.log('🌐 API Base URL:', API_BASE_URL)
       
       const { data: { session }, error: sessionError } = await supabase.auth.getSession()
       
-      if (sessionError) {
-        console.error('❌ Session error during upload:', sessionError)
-      }
-      
-      const formData = new FormData()
-      formData.append('file', {
-        uri: imageUri,
-        type: 'image/jpeg',
-        name: 'image.jpg',
-      } as any)
-
-      const headers: any = {}
-      if (session?.access_token) {
-        headers['Authorization'] = `Bearer ${session.access_token}`
-        headers['X-Supabase-Token'] = session.access_token
-        console.log('✅ Added mobile-compatible auth headers to upload request')
-      } else {
-        console.warn('⚠️ No session/token for upload request')
-      }
-
-      const uploadUrl = `${API_BASE_URL}/api/upload-image`
-      console.log('🚀 Making upload request to:', uploadUrl)
-
-      const response = await fetch(uploadUrl, {
-        method: 'POST',
-        body: formData,
-        headers,
-      })
-
-      console.log('📊 Upload response status:', response.status)
-      console.log('📊 Upload response headers:', Object.fromEntries(response.headers.entries()))
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error('❌ Upload failed with status:', response.status, 'Body:', errorText)
+      if (sessionError || !session?.user) {
+        console.error('❌ No authenticated user for upload:', sessionError)
         return {
           success: false,
-          error: `Upload failed: ${response.status} - ${errorText}`,
+          error: 'Authentication required for upload',
         }
       }
 
-      const data = await response.json()
-      console.log('✅ Upload response data:', data)
+      // Generate unique filename
+      const timestamp = Date.now()
+      const randomId = Math.random().toString(36).substring(2, 15)
+      const fileName = `${session.user.id}/${timestamp}_${randomId}.jpg`
       
-      // Transform API response to match interface
+      console.log('📁 Generated filename:', fileName)
+
+      // Convert URI to blob for upload
+      let imageBlob: Blob
+      
+      if (imageUri.startsWith('data:')) {
+        // Handle base64 data URLs
+        const response = await fetch(imageUri)
+        imageBlob = await response.blob()
+      } else {
+        // Handle file URIs (React Native)
+        const response = await fetch(imageUri)
+        imageBlob = await response.blob()
+      }
+
+      console.log('📦 Image blob size:', imageBlob.size, 'bytes')
+
+      // Upload to Supabase storage
+      const { data, error } = await supabase.storage
+        .from('user_images')
+        .upload(fileName, imageBlob, {
+          contentType: 'image/jpeg',
+          upsert: false
+        })
+
+      if (error) {
+        console.error('❌ Supabase storage upload error:', error)
+        return {
+          success: false,
+          error: `Storage upload failed: ${error.message}`,
+        }
+      }
+
+      console.log('✅ Upload successful, path:', data.path)
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('user_images')
+        .getPublicUrl(fileName)
+
+      console.log('🌐 Public URL:', publicUrl)
+      
       return {
-        success: data.success,
-        fileUrl: data.fileUrl,
-        filePath: data.filePath,
-        error: data.error
+        success: true,
+        fileUrl: publicUrl,
+        filePath: data.path,
       }
     } catch (error) {
       console.error('❌ Upload error:', error)
@@ -135,41 +118,192 @@ export const aiService = {
 
   async editImage(request: EditImageRequest): Promise<EditImageResponse> {
     try {
-      console.log('🎨 Starting image edit...')
+      console.log('🎨 Starting direct AI image edit...')
       console.log('📝 Edit request:', request)
+      console.log('🔧 Using provider:', AI_PROVIDER, 'model:', AI_MODEL)
+
+      // Check authentication
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
       
-      const headers = await getAuthHeaders()
-      const editUrl = `${API_BASE_URL}/api/edit-image`
-      
-      console.log('🚀 Making edit request to:', editUrl)
-      console.log('📋 Request headers:', headers)
-      
-      const response = await fetch(editUrl, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(request),
+      if (sessionError || !session?.user) {
+        console.error('❌ No authenticated user for edit:', sessionError)
+        return {
+          success: false,
+          error: 'Authentication required for editing',
+        }
+      }
+
+      // Check and deduct credits first
+      const creditsResult = await this.checkAndDeductCredits(session.user.id)
+      if (!creditsResult.success) {
+        return {
+          success: false,
+          error: creditsResult.error || 'Insufficient credits',
+        }
+      }
+
+      // Make AI API call based on provider
+      let aiResult: EditImageResponse
+      if (AI_PROVIDER === 'tuzi') {
+        aiResult = await this.editImageWithTuzi(request)
+      } else {
+        aiResult = await this.editImageWithReplicate(request)
+      }
+
+      if (!aiResult.success) {
+        // Refund credits if AI call failed
+        await this.refundCredits(session.user.id)
+        return aiResult
+      }
+
+      // Save result to history
+      await this.saveImageToHistory({
+        userId: session.user.id,
+        imageUrl: aiResult.predictionId!, // For Tuzi, this is the actual image URL
+        prompt: request.prompt,
+        aspectRatio: request.aspectRatio,
+        parentImageId: request.parentImageId,
       })
 
-      console.log('📊 Edit response status:', response.status)
-      console.log('📊 Edit response headers:', Object.fromEntries(response.headers.entries()))
+      console.log('✅ Direct AI edit completed successfully')
+      return aiResult
+    } catch (error) {
+      console.error('❌ Direct AI edit error:', error)
+      return {
+        success: false,
+        error: `Failed to edit image: ${error}`,
+      }
+    }
+  },
+
+  // Tuzi AI implementation
+  async editImageWithTuzi(request: EditImageRequest): Promise<EditImageResponse> {
+    try {
+      console.log('🐰 Making Tuzi AI request...')
+      
+      if (!TUZI_API_KEY) {
+        return {
+          success: false,
+          error: 'Tuzi API key not configured'
+        }
+      }
+
+      const payload = {
+        model: AI_MODEL,
+        prompt: `${request.inputImage} ${request.prompt}`,
+        aspect_ratio: request.aspectRatio || "1:1",
+        output_format: "png",
+        safety_tolerance: 2,
+        prompt_upsampling: false
+      }
+
+      console.log('📤 Tuzi request payload:', payload)
+
+      const response = await fetch('https://api.tu-zi.com/v1/images/generations', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${TUZI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      })
+
+      console.log('📊 Tuzi response status:', response.status)
 
       if (!response.ok) {
         const errorText = await response.text()
-        console.error('❌ Edit failed with status:', response.status, 'Body:', errorText)
+        console.error('❌ Tuzi API error:', errorText)
         return {
           success: false,
-          error: `Edit failed: ${response.status} - ${errorText}`,
+          error: `Tuzi API error: ${response.status} - ${errorText}`,
         }
       }
 
       const data = await response.json()
-      console.log('✅ Edit response data:', data)
-      return data
+      console.log('✅ Tuzi response data:', data)
+
+      if (data.data && data.data.length > 0) {
+        return {
+          success: true,
+          predictionId: data.data[0].url, // Tuzi returns image URL directly
+          status: 'succeeded',
+        }
+      } else {
+        return {
+          success: false,
+          error: data.error || 'No image generated by Tuzi AI',
+        }
+      }
     } catch (error) {
-      console.error('❌ Edit image error:', error)
+      console.error('❌ Tuzi AI error:', error)
       return {
         success: false,
-        error: `Failed to edit image: ${error}`,
+        error: `Tuzi AI request failed: ${error}`,
+      }
+    }
+  },
+
+  // Replicate AI implementation
+  async editImageWithReplicate(request: EditImageRequest): Promise<EditImageResponse> {
+    try {
+      console.log('🔄 Making Replicate AI request...')
+      
+      if (!REPLICATE_API_TOKEN) {
+        return {
+          success: false,
+          error: 'Replicate API token not configured'
+        }
+      }
+
+      const modelPath = AI_MODEL === 'flux-kontext-pro' 
+        ? 'black-forest-labs/flux-kontext-pro/predictions'
+        : 'black-forest-labs/flux-kontext-max/predictions'
+
+      const payload = {
+        input: {
+          aspect_ratio: request.aspectRatio || "match_input_image",
+          input_image: request.inputImage,
+          output_format: "png",
+          prompt: request.prompt,
+          safety_tolerance: 2
+        }
+      }
+
+      console.log('📤 Replicate request payload:', payload)
+
+      const response = await fetch(`https://api.replicate.com/v1/models/${modelPath}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Token ${REPLICATE_API_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      })
+
+      console.log('📊 Replicate response status:', response.status)
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('❌ Replicate API error:', errorText)
+        return {
+          success: false,
+          error: `Replicate API error: ${response.status} - ${errorText}`,
+        }
+      }
+
+      const data = await response.json()
+      console.log('✅ Replicate response data:', data)
+
+      return {
+        success: true,
+        predictionId: data.id,
+        status: data.status,
+      }
+    } catch (error) {
+      console.error('❌ Replicate AI error:', error)
+      return {
+        success: false,
+        error: `Replicate AI request failed: ${error}`,
       }
     }
   },
@@ -278,36 +412,172 @@ export const aiService = {
   }> {
     try {
       console.log('🔍 Checking prediction status for ID:', predictionId)
-      const headers = await getAuthHeaders()
-      const statusUrl = `${API_BASE_URL}/api/check-prediction?id=${predictionId}`
-      
-      console.log('🚀 Making status check request to:', statusUrl)
-      
-      const response = await fetch(statusUrl, {
-        method: 'GET',
-        headers,
-      })
 
-      console.log('📊 Status check response status:', response.status)
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error('❌ Status check failed with status:', response.status, 'Body:', errorText)
+      if (AI_PROVIDER === 'tuzi') {
+        // Tuzi AI returns results synchronously, so predictionId is the actual image URL
+        console.log('✅ Tuzi AI result (synchronous):', predictionId)
         return {
-          success: false,
-          error: `Status check failed: ${response.status} - ${errorText}`,
+          success: true,
+          status: 'succeeded',
+          output: predictionId // The image URL
         }
+      } else {
+        // Replicate AI requires status polling
+        return this.checkReplicateStatus(predictionId)
       }
-
-      const data = await response.json()
-      console.log('✅ Status check response data:', data)
-      return data
     } catch (error) {
       console.error('❌ Check prediction error:', error)
       return {
         success: false,
         error: `Failed to check prediction status: ${error}`,
       }
+    }
+  },
+
+  // Replicate status checking
+  async checkReplicateStatus(predictionId: string): Promise<{
+    success: boolean
+    status?: string
+    output?: string
+    error?: string
+  }> {
+    try {
+      console.log('🔄 Checking Replicate status for:', predictionId)
+      
+      if (!REPLICATE_API_TOKEN) {
+        return {
+          success: false,
+          error: 'Replicate API token not configured'
+        }
+      }
+
+      const response = await fetch(`https://api.replicate.com/v1/predictions/${predictionId}`, {
+        headers: {
+          'Authorization': `Token ${REPLICATE_API_TOKEN}`,
+        },
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('❌ Replicate status check error:', errorText)
+        return {
+          success: false,
+          error: `Replicate status check failed: ${response.status} - ${errorText}`,
+        }
+      }
+
+      const data = await response.json()
+      console.log('✅ Replicate status data:', data)
+
+      return {
+        success: true,
+        status: data.status,
+        output: data.output?.[0], // Get first output URL
+        error: data.error
+      }
+    } catch (error) {
+      console.error('❌ Replicate status check error:', error)
+      return {
+        success: false,
+        error: `Replicate status check failed: ${error}`,
+      }
+    }
+  },
+
+  // Credit management functions
+  async checkAndDeductCredits(userId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      console.log('💳 Checking and deducting credits for user:', userId)
+
+      // Use RPC function to atomically check and deduct credits
+      const { data, error } = await supabase.rpc('deduct_user_credits', { 
+        p_user_id: userId, 
+        p_amount: 1 
+      })
+
+      if (error) {
+        console.error('❌ Credit deduction error:', error)
+        return {
+          success: false,
+          error: error.message.includes('insufficient') ? 'Insufficient credits' : 'Credit check failed'
+        }
+      }
+
+      console.log('✅ Credits deducted successfully, remaining:', data)
+      return { success: true }
+    } catch (error) {
+      console.error('❌ Credit check error:', error)
+      return {
+        success: false,
+        error: 'Failed to check credits'
+      }
+    }
+  },
+
+  async refundCredits(userId: string): Promise<void> {
+    try {
+      console.log('💰 Refunding credits for user:', userId)
+
+      const { error } = await supabase.rpc('add_user_credits', { 
+        p_user_id: userId, 
+        p_amount: 1 
+      })
+
+      if (error) {
+        console.error('❌ Credit refund error:', error)
+      } else {
+        console.log('✅ Credits refunded successfully')
+      }
+    } catch (error) {
+      console.error('❌ Credit refund error:', error)
+    }
+  },
+
+  // Save image to history
+  async saveImageToHistory(params: {
+    userId: string
+    imageUrl: string
+    prompt: string
+    aspectRatio?: string
+    parentImageId?: string
+  }): Promise<void> {
+    try {
+      console.log('💾 Saving image to history:', params)
+
+      // Generate project ID (use parent's project ID or create new one)
+      let projectId = params.parentImageId || `project_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`
+
+      // If this is an edit (has parentImageId), get the project ID from the parent
+      if (params.parentImageId) {
+        const { data: parentImage } = await supabase
+          .from('ai_images_creator_history')
+          .select('project_id')
+          .eq('id', params.parentImageId)
+          .single()
+
+        if (parentImage) {
+          projectId = parentImage.project_id
+        }
+      }
+
+      const { error } = await supabase
+        .from('ai_images_creator_history')
+        .insert({
+          user_id: params.userId,
+          image_url: params.imageUrl,
+          prompt: params.prompt,
+          aspect_ratio: params.aspectRatio,
+          parent_image_id: params.parentImageId,
+          project_id: projectId,
+        })
+
+      if (error) {
+        console.error('❌ Failed to save image to history:', error)
+      } else {
+        console.log('✅ Image saved to history successfully')
+      }
+    } catch (error) {
+      console.error('❌ Save to history error:', error)
     }
   },
 }
