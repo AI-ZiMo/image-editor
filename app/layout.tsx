@@ -42,6 +42,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+      </head>
       <body className="font-sans antialiased">
         <ThemeProvider
           attribute="class"

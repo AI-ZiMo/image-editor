@@ -33,6 +33,12 @@ const nextConfig: NextConfig = {
         pathname: '/storage/v1/object/public/**',
       },
       {
+        protocol: 'https',
+        hostname: 'd14hshog91hm5619qodg.baseapi.memfiredb.com',
+        port: '',
+        pathname: '/storage/v1/object/public/**',
+      },
+      {
         protocol: 'http',
         hostname: 'localhost',
         port: '3000',

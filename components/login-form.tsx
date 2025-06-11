@@ -24,10 +24,54 @@ export function LoginForm({
 }: React.ComponentPropsWithoutRef<"div">) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
+  const [verifyCode, setVerifyCode] = useState("");
+  const [loginType, setLoginType] = useState<"email" | "phone">("email");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isSendingCode, setIsSendingCode] = useState(false);
+  const [countdown, setCountdown] = useState(0);
   const router = useRouter();
+
+  // 获取验证码
+  const getVerifyCode = async () => {
+    const supabase = createClient();
+    setIsSendingCode(true);
+    setError(null);
+
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        phone: phone,
+      });
+      
+      if (error) throw error;
+      
+      toast.success('短信已发送至您的手机中，请注意查收。');
+      
+      // 开始倒计时
+      setCountdown(60);
+      const timer = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      
+    } catch (error: unknown) {
+      let errorMessage = "发送验证码失败，请重试";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setIsSendingCode(false);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,12 +80,24 @@ export function LoginForm({
     setError(null);
 
     try {
-      const { error, data } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      
-      if (error) throw error;
+      if (loginType === "email") {
+        // 邮箱密码登录
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        
+        if (error) throw error;
+      } else {
+        // 手机号验证码登录
+        const { error } = await supabase.auth.verifyOtp({
+          phone: phone,
+          token: verifyCode,
+          type: 'sms',
+        });
+        
+        if (error) throw error;
+      }
       
       // 设置成功状态
       setIsLoading(false);
@@ -72,8 +128,14 @@ export function LoginForm({
           case "Too many requests":
             errorMessage = "请求过于频繁，请稍后再试";
             break;
+          case "Invalid token":
+            errorMessage = "验证码错误或已过期";
+            break;
+          case "Token has expired":
+            errorMessage = "验证码已过期，请重新获取";
+            break;
           default:
-            errorMessage = "登录失败，请重试";
+            errorMessage = error.message;
         }
       }
       setError(errorMessage);
@@ -90,41 +152,108 @@ export function LoginForm({
         <CardHeader className="text-center">
           <CardTitle className="text-2xl text-purple-600">登录</CardTitle>
           <CardDescription>
-            输入您的邮箱以登录您的账户
+            {loginType === "email" ? "输入您的邮箱以登录您的账户" : "输入您的手机号以登录您的账户"}
           </CardDescription>
+          {/* 登录方式切换 */}
+          <div className="flex justify-center mt-4">
+            <div className="bg-gray-100 p-1 rounded-lg">
+              <button
+                type="button"
+                onClick={() => setLoginType("email")}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  loginType === "email"
+                    ? "bg-white text-purple-600 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                邮箱登录
+              </button>
+              <button
+                type="button"
+                onClick={() => setLoginType("phone")}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  loginType === "phone"
+                    ? "bg-white text-purple-600 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                手机登录
+              </button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin}>
             <div className="flex flex-col gap-6">
-              <div className="grid gap-2">
-                <Label htmlFor="email">邮箱</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="example@example.com"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <div className="grid gap-2">
-                <div className="flex items-center">
-                  <Label htmlFor="password">密码</Label>
-                  <Link
-                    href="/forgot-password"
-                    className="ml-auto inline-block text-sm text-purple-600 underline-offset-4 hover:underline"
-                  >
-                    忘记密码？
-                  </Link>
-                </div>
-                <Input
-                  id="password"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
+              {loginType === "email" ? (
+                <>
+                  <div className="grid gap-2">
+                    <Label htmlFor="email">邮箱</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="example@example.com"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <div className="flex items-center">
+                      <Label htmlFor="password">密码</Label>
+                      <Link
+                        href="/forgot-password"
+                        className="ml-auto inline-block text-sm text-purple-600 underline-offset-4 hover:underline"
+                      >
+                        忘记密码？
+                      </Link>
+                    </div>
+                    <Input
+                      id="password"
+                      type="password"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="grid gap-2">
+                    <Label htmlFor="phone">手机号</Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="请输入手机号"
+                      required
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="verifyCode">验证码</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="verifyCode"
+                        type="text"
+                        placeholder="请输入验证码"
+                        required
+                        value={verifyCode}
+                        onChange={(e) => setVerifyCode(e.target.value)}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={getVerifyCode}
+                        disabled={isSendingCode || countdown > 0 || !phone.trim()}
+                        className="whitespace-nowrap"
+                      >
+                        {isSendingCode ? "发送中..." : countdown > 0 ? `${countdown}s` : "获取验证码"}
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              )}
               {error && <p className="text-sm text-red-500">{error}</p>}
               <Button 
                 type="submit" 

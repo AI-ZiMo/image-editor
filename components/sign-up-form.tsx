@@ -43,13 +43,16 @@ export function SignUpForm({
     }
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { error, data } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/protected`,
+          emailRedirectTo: `${window.location.origin}/confirm`,
         },
       });
+      
+      // 调试信息：检查返回数据
+      console.log('注册响应:', { error, data });
       
       if (error) throw error;
       
