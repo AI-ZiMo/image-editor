@@ -122,15 +122,15 @@ export function Navbar({ showAuthButton = true, user }: NavbarProps) {
                       <User className="h-4 w-4 text-purple-600" />
                     </div>
                     <span className="text-sm font-medium text-gray-700 max-w-32 truncate">
-                      {currentUser.email}
+                      {currentUser.email || currentUser.phone || '用户'}
                     </span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <div className="px-2 py-1.5">
-                    <p className="text-sm font-medium">{currentUser.email}</p>
+                    <p className="text-sm font-medium">{currentUser.email || currentUser.phone || '用户'}</p>
                     <p className="text-xs text-muted-foreground">
-                      {currentUser.user_metadata?.full_name || '用户'}
+                      {currentUser.user_metadata?.full_name || (currentUser.phone ? '手机用户' : '邮箱用户')}
                     </p>
                   </div>
                   <DropdownMenuSeparator />
