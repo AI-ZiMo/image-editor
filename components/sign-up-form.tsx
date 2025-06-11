@@ -65,7 +65,26 @@ export function SignUpForm({
       }, 1000);
       
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "注册失败，请重试";
+      let errorMessage = "注册失败，请重试";
+      
+      if (error instanceof Error) {
+        // 将常见的英文错误信息转换为中文
+        const message = error.message.toLowerCase();
+        if (message.includes('user already registered') || message.includes('email already')) {
+          errorMessage = "该邮箱已被注册，请使用其他邮箱或直接登录";
+        } else if (message.includes('invalid email')) {
+          errorMessage = "邮箱格式不正确";
+        } else if (message.includes('password') && message.includes('weak')) {
+          errorMessage = "密码强度不够，请使用更强的密码";
+        } else if (message.includes('password') && message.includes('short')) {
+          errorMessage = "密码长度不够，至少需要6个字符";
+        } else if (message.includes('network') || message.includes('connection')) {
+          errorMessage = "网络连接错误，请检查网络后重试";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       setError(errorMessage);
       toast.error(errorMessage);
       // 只有在出错时才立即结束加载状态
