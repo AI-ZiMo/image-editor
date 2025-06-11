@@ -2,7 +2,13 @@
   "permissions": {
     "allow": [
       "Bash(rm:*)",
-      "Bash(pnpm lint:*)"
+      "Bash(pnpm lint:*)",
+      "Bash(find:*)",
+      "Bash(npm install:*)",
+      "Bash(npm start)",
+      "mcp__ide__getDiagnostics",
+      "Bash(npm uninstall:*)",
+      "Bash(npx expo start:*)"
     ],
     "deny": []
   }
