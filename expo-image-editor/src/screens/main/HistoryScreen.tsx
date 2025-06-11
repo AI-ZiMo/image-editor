@@ -25,7 +25,7 @@ const imageWidth = (width - 60) / 2
 
 export const HistoryScreen: React.FC = () => {
   const navigation = useNavigation<HistoryScreenNavigationProp>()
-  const [projects, setProjects] = useState<ImageProject[]>([])
+  const [projects, setProjects] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
 
@@ -52,11 +52,14 @@ export const HistoryScreen: React.FC = () => {
     loadHistory()
   }
 
-  const renderProjectItem = ({ item }: { item: ImageProject }) => {
-    const latestImage = item.images[item.images.length - 1] || {
-      image_url: item.original_image_url,
-      created_at: item.created_at,
+  const renderProjectItem = ({ item }: { item: any }) => {
+    // Get the latest image - either the most recent edit or the original
+    const latestEdit = item.edits && item.edits.length > 0 ? item.edits[item.edits.length - 1] : null
+    const latestImage = latestEdit || item.original_image || {
+      image_url: '',
+      created_at: new Date().toISOString(),
       prompt: null,
+      id: '',
     }
 
     return (
@@ -89,7 +92,7 @@ export const HistoryScreen: React.FC = () => {
           <View style={styles.projectStats}>
             <View style={styles.statItem}>
               <Ionicons name="images-outline" size={14} color={Colors.textSecondary} />
-              <Text style={styles.statText}>{item.images.length} 张</Text>
+              <Text style={styles.statText}>{(item.edits?.length || 0) + 1} 张</Text>
             </View>
           </View>
         </View>

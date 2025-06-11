@@ -236,12 +236,14 @@ export const aiService = {
         return []
       }
 
-      console.log('✅ User history fetched:', history?.length || 0, 'items')
+      const historyCount = Array.isArray(history) ? history.length : 0
+      console.log('✅ User history fetched:', historyCount, 'items')
       
       // Group by project_id to match web API structure
       const projectsMap = new Map()
       
-      history?.forEach(item => {
+      if (Array.isArray(history)) {
+        history.forEach(item => {
         const projectId = item.project_id || 'default'
         
         if (!projectsMap.has(projectId)) {
@@ -252,10 +254,11 @@ export const aiService = {
           })
         }
         
-        if (item.parent_image_id) {
-          projectsMap.get(projectId).edits.push(item)
-        }
-      })
+          if (item.parent_image_id) {
+            projectsMap.get(projectId).edits.push(item)
+          }
+        })
+      }
       
       const projects = Array.from(projectsMap.values())
       console.log('✅ Organized into', projects.length, 'projects')
