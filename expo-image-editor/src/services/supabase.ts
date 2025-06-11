@@ -1,8 +1,13 @@
 import { createClient } from '@supabase/supabase-js'
-import Constants from 'expo-constants'
 
-const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl || 'YOUR_SUPABASE_URL'
-const supabaseAnonKey = Constants.expoConfig?.extra?.supabaseAnonKey || 'YOUR_SUPABASE_ANON_KEY'
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || 'YOUR_SUPABASE_URL'
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY'
+
+console.log('🔧 Supabase configuration:', {
+  url: supabaseUrl,
+  hasAnonKey: !!supabaseAnonKey,
+  anonKeyLength: supabaseAnonKey?.length
+})
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
@@ -10,4 +15,14 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     detectSessionInUrl: false,
   },
+})
+
+// Add auth state logging
+supabase.auth.onAuthStateChange((event, session) => {
+  console.log('🔐 Auth state changed:', {
+    event,
+    hasSession: !!session,
+    userId: session?.user?.id,
+    hasAccessToken: !!session?.access_token
+  })
 })
