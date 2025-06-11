@@ -22,20 +22,39 @@ npx expo start --android
 Create `.env` file in `expo-image-editor/` directory:
 
 ```env
-EXPO_PUBLIC_API_BASE_URL=https://your-api-domain.com
+# Supabase Configuration
 EXPO_PUBLIC_SUPABASE_URL=your_supabase_url
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# AI Service Configuration
+EXPO_PUBLIC_AI_PROVIDER=tuzi  # or "replicate"
+EXPO_PUBLIC_AI_MODEL=flux-kontext-pro  # or "flux-kontext-max"
+
+# AI Provider Keys (choose based on provider)
+EXPO_PUBLIC_TUZI_API_KEY=your_tuzi_api_key  # if using tuzi provider
+EXPO_PUBLIC_REPLICATE_API_TOKEN=your_replicate_token  # if using replicate provider
 ```
 
 ## Features
 
 - 📱 Native mobile UI optimized for iOS and Android
 - 📷 Camera and gallery integration
-- 🎨 AI-powered image editing
-- 🔐 Supabase authentication
-- 💳 Credit system integration
-- 📊 Project-based image organization
-- 📱 Offline-ready architecture
+- 🎨 Direct AI-powered image editing (Tuzi AI & Replicate)
+- ☁️ Direct Supabase storage and database operations
+- 🔐 Supabase authentication with JWT tokens
+- 💳 Automatic credit management and deduction
+- 📊 Project-based image organization and history
+- 🚀 Independent operation (no web API dependency)
+- 📱 Complete offline-ready architecture
+
+## Architecture
+
+This mobile app operates completely independently from the web application:
+
+- **Direct AI Integration**: Makes API calls directly to Tuzi AI or Replicate
+- **Direct Storage**: Uploads images directly to Supabase storage
+- **Direct Database**: Saves history and manages credits via Supabase client
+- **No Web API**: Bypasses the web application's API entirely for better performance
 
 ## Branch Structure
 
