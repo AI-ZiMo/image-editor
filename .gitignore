@@ -42,4 +42,4 @@ yarn-error.log*
 next-env.d.ts
 
 # expo mobile app - exclude from Next.js build
-/expo-image-editor
+# /expo-image-editor  # Commented out on mobile branch for development
