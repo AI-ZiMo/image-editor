@@ -1,0 +1,16 @@
+# Mobile App Only Branch
+# This branch only tracks the expo-image-editor mobile application
+
+# Ignore everything except expo-image-editor
+/*
+!/expo-image-editor/
+!.gitignore
+!README.md
+
+# Standard ignores within expo-image-editor
+expo-image-editor/node_modules/
+expo-image-editor/.expo/
+expo-image-editor/dist/
+expo-image-editor/npm-debug.*
+expo-image-editor/yarn-error.log
+expo-image-editor/.env*.local
