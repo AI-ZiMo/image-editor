@@ -227,7 +227,51 @@ export default function ImageEditor() {
         return
       }
 
-      // Poll for completion
+      // 检查是否已经完成（对于同步Provider如Tuzi AI）
+      if (editResult.completed && editResult.imageUrl) {
+        console.log('=== AI处理已完成，直接显示结果 ===')
+        console.log('完成的图片URL:', editResult.imageUrl.substring(0, 50) + '...')
+        
+        // 直接处理完成的结果，不需要轮询
+        try {
+          // 创建新的图片版本并立即显示
+          const newVersion: ImageVersion = {
+            id: `generated-${Date.now()}`,
+            url: editResult.imageUrl,
+            style: style || undefined,
+            prompt: style ? undefined : prompt,
+            replicateFileUrl: editResult.imageUrl,
+            supabaseFilePath: undefined, // 后台存储中处理
+          }
+          
+          console.log('添加新图片版本到界面:', newVersion.id)
+          setImageVersions((prev) => [...prev, newVersion])
+          
+          // 刷新积分显示
+          try {
+            const response = await fetch('/api/user-credits')
+            if (response.ok) {
+              const data = await response.json()
+              setUserCredits(data.credits)
+            }
+          } catch (error) {
+            console.error('刷新积分失败:', error)
+          }
+          
+          setIsProcessing(false)
+          toast.success('图像编辑完成！')
+          return
+          
+        } catch (error) {
+          console.error('处理完成结果时出错:', error)
+          toast.error('图像编辑完成但显示失败')
+          setIsProcessing(false)
+          return
+        }
+      }
+
+      // 对于异步Provider（如Replicate），继续轮询
+      console.log('=== 开始轮询异步处理结果 ===')
       const predictionId = editResult.predictionId
       let attempts = 0
       const maxAttempts = 60 // 5 minutes with 5-second intervals

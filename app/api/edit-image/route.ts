@@ -2,55 +2,77 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { aiService } from '@/lib/ai-service'
 
-// 后台异步存储图片和历史记录
+// 后台异步存储图片和历史记录（直接调用，避免HTTP复杂性）
 async function storeImageInBackground(userId: string, imageUrl: string, prompt: string, aspectRatio: string) {
   try {
     console.log('=== 开始后台存储 ===')
     console.log('用户ID:', userId, '图片URL:', imageUrl?.substring(0, 50) + '...')
     
-    // 1. 存储图片到Supabase Storage
-    const storeResponse = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/store-generated-image`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ imageUrl }),
-    })
+    // 使用service role client进行后台存储（避免身份验证问题）
+    const serviceSupabase = await createServiceRoleClient()
     
-    if (!storeResponse.ok) {
-      throw new Error('图片存储失败')
+    // 1. 下载并存储图片
+    console.log('下载图片中...')
+    const imageResponse = await fetch(imageUrl)
+    if (!imageResponse.ok) {
+      throw new Error(`图片下载失败: ${imageResponse.status} ${imageResponse.statusText}`)
     }
     
-    const storeResult = await storeResponse.json()
-    console.log('图片存储成功:', storeResult.storedUrl)
+    const imageBuffer = await imageResponse.arrayBuffer()
+    const uint8Array = new Uint8Array(imageBuffer)
+    
+    // 生成唯一文件名
+    const fileName = `generated-${Date.now()}-${Math.random().toString(36).substring(2)}.png`
+    const filePath = `${userId}/${fileName}`
+    
+    console.log('上传到Supabase Storage:', filePath)
+    
+    // 上传到Supabase Storage
+    const { error: uploadError } = await serviceSupabase.storage
+      .from('images')
+      .upload(filePath, uint8Array, {
+        contentType: 'image/png',
+        upsert: false
+      })
+    
+    if (uploadError) {
+      throw new Error(`图片存储失败: ${uploadError.message}`)
+    }
+    
+    // 获取公共URL
+    const { data: { publicUrl } } = serviceSupabase.storage
+      .from('images')
+      .getPublicUrl(filePath)
+    
+    console.log('图片存储成功:', publicUrl.substring(0, 50) + '...')
     
     // 2. 保存到历史记录
-    const historyResponse = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/save-image-history`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        userId,
-        imageUrl: storeResult.storedUrl,
-        storagePath: storeResult.filePath,
-        prompt,
-        aspectRatio,
-        isOriginal: false
-      }),
-    })
+    console.log('保存历史记录中...')
     
-    if (!historyResponse.ok) {
-      throw new Error('历史记录保存失败')
+    // 对于生成的图片，我们需要创建一个新项目（因为没有现有项目上下文）
+    // 首先创建一个项目，将生成的图片作为"原图"
+    const { data: newProjectId, error: projectError } = await serviceSupabase
+      .rpc('create_new_project', {
+        p_user_id: userId,
+        p_image_url: publicUrl,
+        p_storage_path: filePath,
+        p_project_name: `AI生成 - ${new Date().toLocaleString()}`
+      })
+    
+    if (projectError) {
+      console.error('项目创建失败:', projectError)
+      // 项目创建失败，但图片已存储，不影响用户体验
+    } else {
+      console.log('项目创建成功:', newProjectId)
     }
     
-    const historyResult = await historyResponse.json()
-    console.log('历史记录保存成功:', historyResult)
+    
     console.log('=== 后台存储完成 ===')
     
   } catch (error) {
     console.error('=== 后台存储失败 ===')
-    console.error('存储错误:', error)
+    console.error('存储错误详情:', error)
+    console.error('错误堆栈:', error instanceof Error ? error.stack : error)
     // 不抛出错误，避免影响主流程
   }
 }
@@ -173,6 +195,8 @@ export async function POST(request: NextRequest) {
     
     console.log('=== AI图像编辑请求已提交并扣除积分 ===')
     console.log('预测ID:', aiResult.predictionId)
+    console.log('当前Provider:', currentProvider)
+    console.log('AI结果状态:', aiResult.status)
     
     // 对于Tuzi AI（同步返回），predictionId就是图片URL，可以立即显示
     // 对于Replicate（异步），返回predictionId供轮询使用
@@ -187,6 +211,19 @@ export async function POST(request: NextRequest) {
         imageUrl: aiResult.predictionId, // Tuzi AI的predictionId就是图片URL
         output: aiResult.output
       })
+    }
+    
+    console.log('=== 发送响应给前端 ===')
+    console.log('响应内容:', {
+      ...response,
+      predictionId: response.predictionId?.substring(0, 50) + '...',
+      imageUrl: response.imageUrl?.substring(0, 50) + '...'
+    })
+    
+    if (currentProvider === 'tuzi') {
+      console.log('🚀 Tuzi AI: 同步处理完成，前端应该立即显示结果')
+    } else {
+      console.log('⏳ Replicate: 异步处理，前端需要轮询状态')
     }
     
     // 异步处理存储逻辑（不阻塞响应）
