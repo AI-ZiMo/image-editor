@@ -18,6 +18,7 @@ import { Navbar } from "@/components/navbar"
 import { ImageModal } from "@/components/image-modal"
 import { PaymentResultModal } from "@/components/payment-result-modal"
 import { createClient } from "@/lib/supabase/client"
+import { compressImage, formatFileSize, isValidImageType } from "@/lib/image-utils"
 
 interface ImageVersion {
   id: string
@@ -598,6 +599,64 @@ export default function ImageEditor() {
     setUploadSuccess(false)
     
     try {
+      // 检查文件类型
+      if (!isValidImageType(file)) {
+        toast.error('不支持的文件格式，请上传 JPG、PNG、WebP 或 GIF 图片')
+        setIsUploading(false)
+        return
+      }
+
+      console.log(`原始文件大小: ${formatFileSize(file.size)}`)
+
+      // 对所有图片进行适度压缩优化
+      let processedFile = file
+      const maxSizeBytes = 10 * 1024 * 1024 // 10MB
+      const shouldCompress = file.size > 1024 * 1024 // 大于1MB就压缩
+
+      if (shouldCompress) {
+        const isLargeFile = file.size > maxSizeBytes
+        if (isLargeFile) {
+          toast.info('图片较大，正在压缩中...', { duration: 3000 })
+        } else {
+          toast.info('正在优化图片...', { duration: 2000 })
+        }
+        
+        try {
+          // 根据文件大小设置不同的压缩参数
+          const compressionOptions = isLargeFile ? {
+            maxWidth: 2048,
+            maxHeight: 2048,
+            quality: 0.8,
+            maxSizeKB: 10240 // 10MB
+          } : {
+            maxWidth: 2048,
+            maxHeight: 2048,
+            quality: 0.9, // 较小文件使用更高质量
+            maxSizeKB: 10240 // 10MB
+          }
+
+          processedFile = await compressImage(file, compressionOptions)
+          
+          console.log(`压缩后文件大小: ${formatFileSize(processedFile.size)}`)
+          
+          const compressionRatio = ((file.size - processedFile.size) / file.size * 100).toFixed(1)
+          console.log(`压缩比例: ${compressionRatio}% (${formatFileSize(file.size)} → ${formatFileSize(processedFile.size)})`)
+          
+          if (parseFloat(compressionRatio) > 5) { // 只有压缩超过5%才显示成功提示
+            toast.success(`图片优化完成，减少了 ${compressionRatio}%`)
+          } else {
+            toast.success('图片处理完成')
+          }
+        } catch (error) {
+          console.error('图片压缩失败:', error)
+          toast.error('图片处理失败，请重试')
+          setIsUploading(false)
+          return
+        }
+      } else {
+        console.log('文件较小，无需压缩')
+      }
+
       // Show local preview immediately
       const reader = new FileReader()
       reader.onload = (e) => {
@@ -608,11 +667,11 @@ export default function ImageEditor() {
         }
         setImageVersions([originalImage])
       }
-      reader.readAsDataURL(file)
+      reader.readAsDataURL(processedFile)
 
-      // Upload to Replicate
+      // Upload to server
       const formData = new FormData()
-      formData.append('file', file)
+      formData.append('file', processedFile)
       
       const uploadResponse = await fetch('/api/upload-image', {
         method: 'POST',

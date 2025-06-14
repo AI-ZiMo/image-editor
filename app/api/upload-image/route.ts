@@ -1,6 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 
+// 设置运行时和请求体大小限制
+export const runtime = 'nodejs'
+export const maxDuration = 60
+
+// 配置API路由
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb', // 设置为10MB
+    },
+  },
+}
+
 export async function POST(request: NextRequest) {
   try {
     console.log('Starting upload process...')
