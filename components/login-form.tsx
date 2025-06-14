@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { Check } from "lucide-react";
 
@@ -22,7 +22,6 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [account, setAccount] = useState(""); // 账号（手机号或邮箱）
@@ -34,9 +33,19 @@ export function LoginForm({
   const [isSendingCode, setIsSendingCode] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const router = useRouter();
+  const cleanupRef = useRef<(() => void) | null>(null);
 
   // 调试信息
   console.log("LoginForm rendered, loginType:", loginType);
+
+  // 组件卸载时清理
+  useEffect(() => {
+    return () => {
+      if (cleanupRef.current) {
+        cleanupRef.current();
+      }
+    };
+  }, []);
 
   // 获取验证码（手机号登录）
   const getVerifyCode = async () => {
@@ -155,22 +164,64 @@ export function LoginForm({
         }
       }
       
-      // 设置成功状态
-      setIsLoading(false);
-      setIsSuccess(true);
-      
       console.log("🎉 [登录] 登录成功！");
-      // 显示成功提示
-      toast.success('登录成功！正在跳转...', {
-        duration: 2000,
-      });
       
-      // 短暂延迟后跳转，让用户看到成功提示
-      console.log("🔄 [登录] 1.5秒后跳转到保护页面");
-      setTimeout(() => {
+      // 验证认证状态并立即跳转
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        // 设置成功状态
+        setIsSuccess(true);
+        setIsLoading(false);
+        toast.success('登录成功！', {
+          duration: 1000,
+        });
+        
+        console.log("🔄 [登录] 立即跳转到保护页面");
         router.push("/protected");
-        router.refresh(); // 刷新页面状态
-      }, 1500);
+        router.refresh();
+      } else {
+        // 如果 session 还未同步，监听认证状态变化
+        console.log("⏳ [登录] 等待认证状态同步...");
+        
+        let hasNavigated = false; // 防止重复跳转
+        
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+          if (event === 'SIGNED_IN' && session && !hasNavigated) {
+            hasNavigated = true;
+            console.log("✅ [登录] 认证状态已同步，立即跳转");
+            setIsSuccess(true);
+            setIsLoading(false);
+            toast.success('登录成功！', {
+              duration: 1000,
+            });
+            router.push("/protected");
+            router.refresh();
+            subscription.unsubscribe();
+          }
+        });
+        
+        // 设置超时保护，避免无限等待
+        const timeoutId = setTimeout(() => {
+          subscription.unsubscribe();
+          if (!hasNavigated) {
+            hasNavigated = true;
+            console.log("🔄 [登录] 超时保护：强制跳转");
+            setIsSuccess(true);
+            setIsLoading(false);
+            toast.success('登录成功！', {
+              duration: 1000,
+            });
+            router.push("/protected");
+            router.refresh();
+          }
+        }, 3000);
+        
+        // 保存清理函数，防止内存泄漏
+        cleanupRef.current = () => {
+          clearTimeout(timeoutId);
+          subscription.unsubscribe();
+        };
+      }
       
     } catch (error: unknown) {
       console.log("💥 [登录] 捕获到错误:", error);

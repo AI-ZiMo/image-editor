@@ -8,7 +8,8 @@
       "Bash(npm start)",
       "mcp__ide__getDiagnostics",
       "Bash(npm uninstall:*)",
-      "Bash(npx expo start:*)"
+      "Bash(npx expo start:*)",
+      "Bash(pnpm dev:*)"
     ],
     "deny": []
   }
