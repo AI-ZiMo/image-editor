@@ -9,7 +9,13 @@
       "mcp__ide__getDiagnostics",
       "Bash(npm uninstall:*)",
       "Bash(npx expo start:*)",
-      "Bash(pnpm dev:*)"
+      "Bash(pnpm dev:*)",
+      "mcp__context7__get-library-docs",
+      "mcp__context7__resolve-library-id",
+      "mcp__supabase__list_projects",
+      "mcp__supabase__list_tables",
+      "mcp__supabase__execute_sql",
+      "Bash(npx tsc:*)"
     ],
     "deny": []
   }

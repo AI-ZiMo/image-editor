@@ -2,8 +2,61 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { aiService } from '@/lib/ai-service'
 
+// 后台异步存储图片和历史记录
+async function storeImageInBackground(userId: string, imageUrl: string, prompt: string, aspectRatio: string) {
+  try {
+    console.log('=== 开始后台存储 ===')
+    console.log('用户ID:', userId, '图片URL:', imageUrl?.substring(0, 50) + '...')
+    
+    // 1. 存储图片到Supabase Storage
+    const storeResponse = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/store-generated-image`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ imageUrl }),
+    })
+    
+    if (!storeResponse.ok) {
+      throw new Error('图片存储失败')
+    }
+    
+    const storeResult = await storeResponse.json()
+    console.log('图片存储成功:', storeResult.storedUrl)
+    
+    // 2. 保存到历史记录
+    const historyResponse = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/save-image-history`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId,
+        imageUrl: storeResult.storedUrl,
+        storagePath: storeResult.filePath,
+        prompt,
+        aspectRatio,
+        isOriginal: false
+      }),
+    })
+    
+    if (!historyResponse.ok) {
+      throw new Error('历史记录保存失败')
+    }
+    
+    const historyResult = await historyResponse.json()
+    console.log('历史记录保存成功:', historyResult)
+    console.log('=== 后台存储完成 ===')
+    
+  } catch (error) {
+    console.error('=== 后台存储失败 ===')
+    console.error('存储错误:', error)
+    // 不抛出错误，避免影响主流程
+  }
+}
+
 export async function POST(request: NextRequest) {
-  let user: any = null
+  let user: { id: string; email?: string } | null = null
   
   try {
     const { inputImage, prompt, aspectRatio = "match_input_image" } = await request.json()
@@ -121,12 +174,34 @@ export async function POST(request: NextRequest) {
     console.log('=== AI图像编辑请求已提交并扣除积分 ===')
     console.log('预测ID:', aiResult.predictionId)
     
-    return NextResponse.json({ 
+    // 对于Tuzi AI（同步返回），predictionId就是图片URL，可以立即显示
+    // 对于Replicate（异步），返回predictionId供轮询使用
+    const response = { 
       success: true, 
       predictionId: aiResult.predictionId,
       status: aiResult.status,
-      userId: user.id  // Include user ID for history saving
-    })
+      userId: user.id,  // Include user ID for history saving
+      // 如果是Tuzi AI，添加额外信息表示结果已完成
+      ...(currentProvider === 'tuzi' && {
+        completed: true,
+        imageUrl: aiResult.predictionId, // Tuzi AI的predictionId就是图片URL
+        output: aiResult.output
+      })
+    }
+    
+    // 异步处理存储逻辑（不阻塞响应）
+    if (currentProvider === 'tuzi') {
+      // 对于Tuzi AI，在后台异步存储图片和历史记录
+      setImmediate(async () => {
+        try {
+          await storeImageInBackground(user?.id || '', aiResult.predictionId || '', prompt, aspectRatio)
+        } catch (error) {
+          console.error('后台存储失败:', error)
+        }
+      })
+    }
+    
+    return NextResponse.json(response)
     
   } catch (error) {
     console.error('=== AI图像编辑异常 ===')
