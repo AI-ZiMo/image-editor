@@ -34,6 +34,7 @@ export function LoginForm({
   const [countdown, setCountdown] = useState(0);
   const router = useRouter();
   const cleanupRef = useRef<(() => void) | null>(null);
+  const isSubmittingRef = useRef(false);
 
   // 调试信息
   console.log("LoginForm rendered, loginType:", loginType);
@@ -114,6 +115,14 @@ export function LoginForm({
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // 防止重复提交
+    if (isSubmittingRef.current || isLoading || isSuccess) {
+      console.log("🚫 [登录] 防止重复提交");
+      return;
+    }
+    
+    isSubmittingRef.current = true;
     const supabase = createClient();
     setIsLoading(true);
     setError(null);
@@ -166,62 +175,57 @@ export function LoginForm({
       
       console.log("🎉 [登录] 登录成功！");
       
-      // 验证认证状态并立即跳转
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        // 设置成功状态
-        setIsSuccess(true);
-        setIsLoading(false);
-        toast.success('登录成功！', {
-          duration: 1000,
-        });
+      // 设置成功状态但暂时不跳转
+      setIsSuccess(true);
+      setIsLoading(false);
+      toast.success('登录成功！正在跳转...', {
+        duration: 2000,
+      });
+      
+      // 等待认证状态同步后再跳转
+      console.log("⏳ [登录] 等待认证状态同步...");
+      
+      let hasNavigated = false;
+      let retryCount = 0;
+      const maxRetries = 10;
+      
+      const checkSessionAndNavigate = async () => {
+        if (hasNavigated) return;
         
-        console.log("🔄 [登录] 立即跳转到保护页面");
-        router.push("/protected");
-        router.refresh();
-      } else {
-        // 如果 session 还未同步，监听认证状态变化
-        console.log("⏳ [登录] 等待认证状态同步...");
-        
-        let hasNavigated = false; // 防止重复跳转
-        
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-          if (event === 'SIGNED_IN' && session && !hasNavigated) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          console.log(`🔍 [登录] 第${retryCount + 1}次检查session:`, !!session);
+          
+          if (session) {
             hasNavigated = true;
-            console.log("✅ [登录] 认证状态已同步，立即跳转");
-            setIsSuccess(true);
-            setIsLoading(false);
-            toast.success('登录成功！', {
-              duration: 1000,
-            });
-            router.push("/protected");
-            router.refresh();
-            subscription.unsubscribe();
+            console.log("✅ [登录] Session已同步，立即跳转");
+            // 使用window.location.href强制跳转，避免客户端路由问题
+            window.location.href = '/protected';
+            return;
           }
-        });
-        
-        // 设置超时保护，避免无限等待
-        const timeoutId = setTimeout(() => {
-          subscription.unsubscribe();
-          if (!hasNavigated) {
+          
+          retryCount++;
+          if (retryCount < maxRetries) {
+            setTimeout(checkSessionAndNavigate, 500); // 每500ms检查一次
+          } else {
             hasNavigated = true;
-            console.log("🔄 [登录] 超时保护：强制跳转");
-            setIsSuccess(true);
-            setIsLoading(false);
-            toast.success('登录成功！', {
-              duration: 1000,
-            });
-            router.push("/protected");
-            router.refresh();
+            console.log("🔄 [登录] 达到最大重试次数，强制跳转");
+            window.location.href = '/protected';
           }
-        }, 3000);
-        
-        // 保存清理函数，防止内存泄漏
-        cleanupRef.current = () => {
-          clearTimeout(timeoutId);
-          subscription.unsubscribe();
-        };
-      }
+        } catch (error) {
+          console.log("❌ [登录] 检查session时出错:", error);
+          retryCount++;
+          if (retryCount < maxRetries) {
+            setTimeout(checkSessionAndNavigate, 500);
+          } else {
+            hasNavigated = true;
+            window.location.href = '/protected';
+          }
+        }
+      };
+      
+      // 立即开始检查
+      checkSessionAndNavigate();
       
     } catch (error: unknown) {
       console.log("💥 [登录] 捕获到错误:", error);
@@ -255,6 +259,12 @@ export function LoginForm({
       // 只有在出错时才立即结束加载状态
       setIsLoading(false);
       setIsSuccess(false);
+      isSubmittingRef.current = false;
+    } finally {
+      // 确保在任何情况下都重置提交状态
+      if (!isSuccess) {
+        isSubmittingRef.current = false;
+      }
     }
   };
 
