@@ -80,7 +80,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 获取用户所有作品列表
+-- 获取用户所有作品列表 (已优化)
 CREATE OR REPLACE FUNCTION get_user_projects(p_user_id UUID)
 RETURNS TABLE (
   project_id UUID,
@@ -93,45 +93,43 @@ RETURNS TABLE (
 ) AS $$
 BEGIN
   RETURN QUERY
-  WITH project_stats AS (
+  SELECT 
+    orig.project_id,
+    orig.project_name,
+    orig.image_url as original_image_url,
+    COALESCE(latest.image_url, orig.image_url) as latest_image_url,
+    COALESCE(stats.total_images, 1)::INTEGER as total_images,
+    orig.created_at,
+    COALESCE(stats.max_updated_at, orig.updated_at) as updated_at
+  FROM ai_images_creator_history orig
+  LEFT JOIN (
+    -- 获取每个项目的统计信息
     SELECT 
       h.project_id,
-      h.project_name,
-      h.image_url as original_image_url,
-      h.created_at,
-      COUNT(h2.id) as total_images,
-      MAX(h2.updated_at) as updated_at
+      COUNT(*) as total_images,
+      MAX(h.updated_at) as max_updated_at
     FROM ai_images_creator_history h
-    LEFT JOIN ai_images_creator_history h2 ON h.project_id = h2.project_id 
-      AND h2.user_id = p_user_id 
-      AND h2.is_deleted = false
     WHERE h.user_id = p_user_id 
-      AND h.is_original = true 
       AND h.is_deleted = false
-    GROUP BY h.project_id, h.project_name, h.image_url, h.created_at
-  ),
-  latest_images AS (
+    GROUP BY h.project_id
+  ) stats ON orig.project_id = stats.project_id
+  LEFT JOIN (
+    -- 获取每个项目的最新图片
     SELECT DISTINCT ON (h.project_id)
       h.project_id,
-      h.image_url as latest_image_url
+      h.image_url
     FROM ai_images_creator_history h
     WHERE h.user_id = p_user_id 
       AND h.is_deleted = false
     ORDER BY h.project_id, h.created_at DESC
-  )
-  SELECT 
-    ps.project_id,
-    ps.project_name,
-    ps.original_image_url,
-    li.latest_image_url,
-    ps.total_images::INTEGER,
-    ps.created_at,
-    ps.updated_at
-  FROM project_stats ps
-  LEFT JOIN latest_images li ON ps.project_id = li.project_id
-  ORDER BY ps.updated_at DESC;
+  ) latest ON orig.project_id = latest.project_id
+  WHERE orig.user_id = p_user_id 
+    AND orig.is_original = true 
+    AND orig.is_deleted = false
+  ORDER BY COALESCE(stats.max_updated_at, orig.updated_at) DESC;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
 
 -- 获取特定项目的活跃图片链
 CREATE OR REPLACE FUNCTION get_project_image_chain(

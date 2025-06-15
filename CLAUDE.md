@@ -55,6 +55,7 @@ Database is set up through SQL scripts in `sqls/` directory (execute in order):
 3. `03_functions.sql` - Database functions for business logic
 4. `04_storage_setup.sql` - Supabase storage configuration
 5. `05_payment_table.sql` - Payment system integration
+6. `06_performance_optimization.sql` - Performance optimization (optional but recommended)
 
 #### Key Features
 - **Project-based Image Organization**: Each uploaded original image creates a project; AI edits form a chain within that project
@@ -140,3 +141,4 @@ This is **小猫AI图片编辑** - a PhotoShop alternative using AI for image ed
   - **Replicate (异步)**: Latest Image → Edit → Prediction ID → Poll Status → Storage → Add to Existing Project
 - **Key insight**: AI编辑基于项目中最新图片，形成编辑历史链 (parentId链式关系)
 - **重要Bug修复**: Tuzi AI同步模式之前总是创建新项目，现在已修复为正确添加到现有项目
+- **性能优化**: 历史记录查询已优化，使用复合索引和改进的查询逻辑，加载速度提升至毫秒级

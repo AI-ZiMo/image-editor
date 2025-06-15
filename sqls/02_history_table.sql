@@ -29,14 +29,20 @@ CREATE TABLE ai_images_creator_history (
   deleted_at TIMESTAMP WITH TIME ZONE
 );
 
--- 创建索引
+-- 创建基础索引
 CREATE INDEX idx_history_user_id ON ai_images_creator_history(user_id);
 CREATE INDEX idx_history_project_id ON ai_images_creator_history(project_id);
 CREATE INDEX idx_history_parent_id ON ai_images_creator_history(parent_id);
-CREATE INDEX idx_history_user_project ON ai_images_creator_history(user_id, project_id);
-CREATE INDEX idx_history_not_deleted ON ai_images_creator_history(user_id, project_id, is_deleted) WHERE is_deleted = false;
-CREATE INDEX idx_history_created_at ON ai_images_creator_history(created_at DESC);
-CREATE INDEX idx_history_user_created ON ai_images_creator_history(user_id, created_at DESC);
+
+-- 创建性能优化的复合索引
+CREATE INDEX idx_history_user_original_active ON ai_images_creator_history(user_id, is_original, is_deleted, created_at DESC) WHERE is_deleted = false;
+CREATE INDEX idx_history_user_project_active_created ON ai_images_creator_history(user_id, project_id, is_deleted, created_at DESC) WHERE is_deleted = false;
+CREATE INDEX idx_history_project_created_desc ON ai_images_creator_history(project_id, created_at DESC, is_deleted) WHERE is_deleted = false;
+CREATE INDEX idx_history_parent_user_project ON ai_images_creator_history(parent_id, user_id, project_id, is_deleted) WHERE is_deleted = false;
+CREATE INDEX idx_history_user_updated_desc ON ai_images_creator_history(user_id, updated_at DESC, is_deleted) WHERE is_deleted = false;
+
+-- 覆盖索引，包含查询中需要的所有字段
+CREATE INDEX idx_history_covering_user_projects ON ai_images_creator_history(user_id, is_original, project_id, project_name, image_url, created_at, updated_at) WHERE is_deleted = false AND is_original = true;
 
 -- 约束：原图的project_id必须等于自己的id
 ALTER TABLE ai_images_creator_history 
