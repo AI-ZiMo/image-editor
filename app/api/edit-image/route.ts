@@ -3,7 +3,7 @@ import { createServerClient, createServiceRoleClient } from '@/lib/supabase/serv
 import { aiService } from '@/lib/ai-service'
 
 // 后台异步存储图片和历史记录（直接调用，避免HTTP复杂性）
-async function storeImageInBackground(userId: string, imageUrl: string, prompt: string, aspectRatio: string) {
+async function storeImageInBackground(userId: string, imageUrl: string, prompt: string, aspectRatio: string, projectId?: string, parentId?: string) {
   try {
     console.log('=== 开始后台存储 ===')
     console.log('用户ID:', userId, '图片URL:', imageUrl?.substring(0, 50) + '...')
@@ -49,21 +49,42 @@ async function storeImageInBackground(userId: string, imageUrl: string, prompt: 
     // 2. 保存到历史记录
     console.log('保存历史记录中...')
     
-    // 对于生成的图片，我们需要创建一个新项目（因为没有现有项目上下文）
-    // 首先创建一个项目，将生成的图片作为"原图"
-    const { data: newProjectId, error: projectError } = await serviceSupabase
-      .rpc('create_new_project', {
-        p_user_id: userId,
-        p_image_url: publicUrl,
-        p_storage_path: filePath,
-        p_project_name: `AI生成 - ${new Date().toLocaleString()}`
-      })
-    
-    if (projectError) {
-      console.error('项目创建失败:', projectError)
-      // 项目创建失败，但图片已存储，不影响用户体验
+    if (projectId && parentId) {
+      // 有项目上下文，添加到现有项目
+      console.log('添加到现有项目:', projectId, '父图片:', parentId)
+      const { data: newImageId, error: addError } = await serviceSupabase
+        .rpc('add_generated_image', {
+          p_user_id: userId,
+          p_project_id: projectId,
+          p_parent_id: parentId,
+          p_image_url: publicUrl,
+          p_storage_path: filePath,
+          p_prompt: prompt || null,
+          p_style: null,
+          p_aspect_ratio: aspectRatio
+        })
+      
+      if (addError) {
+        console.error('添加到项目失败:', addError)
+      } else {
+        console.log('成功添加到项目，图片ID:', newImageId)
+      }
     } else {
-      console.log('项目创建成功:', newProjectId)
+      // 没有项目上下文，创建新项目（兜底方案）
+      console.log('没有项目上下文，创建新项目')
+      const { data: newProjectId, error: projectError } = await serviceSupabase
+        .rpc('create_new_project', {
+          p_user_id: userId,
+          p_image_url: publicUrl,
+          p_storage_path: filePath,
+          p_project_name: `AI生成 - ${new Date().toLocaleString()}`
+        })
+      
+      if (projectError) {
+        console.error('项目创建失败:', projectError)
+      } else {
+        console.log('项目创建成功:', newProjectId)
+      }
     }
     
     
@@ -81,7 +102,7 @@ export async function POST(request: NextRequest) {
   let user: { id: string; email?: string } | null = null
   
   try {
-    const { inputImage, prompt, aspectRatio = "match_input_image" } = await request.json()
+    const { inputImage, prompt, aspectRatio = "match_input_image", projectId, parentId } = await request.json()
     
     console.log('=== AI图像编辑开始 ===')
     console.log('请求参数:', { 
@@ -231,7 +252,7 @@ export async function POST(request: NextRequest) {
       // 对于Tuzi AI，在后台异步存储图片和历史记录
       setImmediate(async () => {
         try {
-          await storeImageInBackground(user?.id || '', aiResult.predictionId || '', prompt, aspectRatio)
+          await storeImageInBackground(user?.id || '', aiResult.predictionId || '', prompt, aspectRatio, projectId, parentId)
         } catch (error) {
           console.error('后台存储失败:', error)
         }

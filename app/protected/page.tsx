@@ -205,6 +205,8 @@ export default function ImageEditor() {
           inputImage: inputImageUrl,
           prompt: finalPrompt,
           aspectRatio: selectedAspectRatio === "match" ? "match_input_image" : selectedAspectRatio,
+          projectId: currentProjectId,
+          parentId: latestImage.id,
         }),
       })
 

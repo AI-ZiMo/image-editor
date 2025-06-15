@@ -16,7 +16,8 @@
       "mcp__supabase__list_tables",
       "mcp__supabase__execute_sql",
       "Bash(npx tsc:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(rg:*)"
     ],
     "deny": []
   }
